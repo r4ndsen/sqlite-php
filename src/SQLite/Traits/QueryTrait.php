@@ -17,6 +17,7 @@ use ReflectionException;
 use SQLite3Result;
 use stdClass;
 
+/** @template T of object */
 trait QueryTrait
 {
     use ExecTrait;
@@ -24,18 +25,6 @@ trait QueryTrait
     public function changes(): int
     {
         return $this->conn->changes();
-    }
-
-    /**
-     * run a simple query without prepared statement and yield the result rows.
-     *
-     * @throws ColumnDoesNotExistException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     */
-    public function fetch(string $sql): Generator
-    {
-        yield from $this->fetchArray($this->query($sql));
     }
 
     /**
@@ -67,22 +56,26 @@ trait QueryTrait
     /**
      * the first row of the result set as an object of given class.
      *
+     * @param class-string<T> $class
+     *
+     * @return T|null
+     *
      * @throws ReflectionException
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
      */
     public function fetchInstance(string $sql, array $bind = [], string $class = stdClass::class): ?object
     {
-        foreach ($this->yieldInstances($sql, $bind, $class) as $Object) {
-            return $Object;
+        foreach ($this->yieldInstances($sql, $bind, $class) as $instance) {
+            return $instance;
         }
 
         return null;
     }
 
     /**
+     * @param class-string<T> $class
+     *
+     * @return T[]
+     *
      * @throws ReflectionException
      * @throws BindValueException
      * @throws QueryException
@@ -97,6 +90,10 @@ trait QueryTrait
     /**
      * the first row of the result set as an object of given class.
      *
+     * @param class-string<T> $class
+     *
+     * @return T|null
+     *
      * @throws ReflectionException
      * @throws BindValueException
      * @throws QueryException
@@ -105,8 +102,8 @@ trait QueryTrait
      */
     public function fetchObject(string $sql, array $bind = [], string $class = stdClass::class, array $cArgs = []): ?object
     {
-        foreach ($this->yieldObjects($sql, $bind, $class, $cArgs) as $Object) {
-            return $Object;
+        foreach ($this->yieldObjects($sql, $bind, $class, $cArgs) as $object) {
+            return $object;
         }
 
         return null;
@@ -114,6 +111,10 @@ trait QueryTrait
 
     /**
      * an array of objects created from the selected fields.
+     *
+     * @param class-string<T> $class the class of the objects you want to receive
+     *
+     * @return T[]
      *
      * @throws ReflectionException
      * @throws BindValueException
@@ -291,9 +292,11 @@ trait QueryTrait
     /**
      * produces instances of given class calling the classes native constructor.
      *
-     * @param string $sql   the sql query
-     * @param array  $bind  the params you want to bind to your query
-     * @param string $class the class of the objects you want to receive
+     * @param string          $sql   the sql query
+     * @param array           $bind  the params you want to bind to your query
+     * @param class-string<T> $class the class of the objects you want to receive
+     *
+     * @return Generator<T|null>
      *
      * @throws ReflectionException
      * @throws BindValueException
@@ -322,10 +325,12 @@ trait QueryTrait
     }
 
     /**
-     * @param string $sql   the sql query
-     * @param array  $bind  the params you want to bind to your query
-     * @param string $class the class of the objects you want to receive
-     * @param array  $cArgs constructor arguments to add when instantiating
+     * @param string          $sql   the sql query
+     * @param array           $bind  the params you want to bind to your query
+     * @param class-string<T> $class the class of the objects you want to receive
+     * @param array           $cArgs constructor arguments to add when instantiating
+     *
+     * @return Generator<T|null>
      *
      * @throws ReflectionException
      * @throws BindValueException

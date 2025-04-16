@@ -253,12 +253,6 @@ class Table implements Countable, IteratorAggregate, Stringable
         return (bool) $this->fetchValue($sql, [$this->name]);
     }
 
-    /** @throws TableDoesNotExistException */
-    public function fetchAll(): Traversable
-    {
-        yield from $this->fetch('select * from ' . $this);
-    }
-
     public function getColumnByColumnId(int $id): ?Column
     {
         foreach ($this->columns() as $column) {
@@ -296,7 +290,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     /** @throws TableDoesNotExistException */
     public function getIterator(): Traversable
     {
-        yield from $this->fetchAll();
+        yield from $this->fetchAll('select * from ' . $this);
     }
 
     public function getName(): string

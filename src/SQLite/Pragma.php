@@ -195,7 +195,7 @@ final class Pragma
      */
     public function tableInfo(string $table): iterable
     {
-        yield from $this->fetch(sprintf('pragma table_info(%s)', self::backtickIdentifier($table)));
+        yield from $this->fetchAll(sprintf('pragma table_info(%s)', self::backtickIdentifier($table)));
     }
 
     private function set(string $key, string|int $value): self

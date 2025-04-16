@@ -271,7 +271,7 @@ final class TableTest extends TestCase
 
         $t->push([$name => $value = "test ' val"])->commit();
 
-        $row = $t->fetchAll()->current();
+        $row = $t->toArray()[0];
         self::assertSame([$name => $value], $row);
 
         $t->pushWithoutKeys(['foo']);

@@ -59,17 +59,17 @@ final class QueryTraitTest extends TestCase
         $table->push(['id' => 1]);
         $table->push(['id' => 2]);
 
-        self::assertInstanceOf(Generator::class, $generator = $this->SQLite->fetch('select * from ' . $this->backtick(__METHOD__)));
+        self::assertInstanceOf(Generator::class, $generator = $this->SQLite->yieldAll('select * from ' . $this->backtick(__METHOD__)));
 
         self::assertSame(['id' => 1], $generator->current());
         $generator->next();
         self::assertSame(['id' => 2], $generator->current());
 
-        self::assertInstanceOf(Generator::class, $generator = $this->SQLite->fetch('select null'));
+        self::assertInstanceOf(Generator::class, $generator = $this->SQLite->yieldAll('select null'));
         self::assertSame(['null' => null], $generator->current());
 
-        self::assertInstanceOf(Generator::class, $generator = $this->SQLite->fetch('select 1 where 1 = 2'));
-        self::assertNull($generator->current());
+        self::assertInstanceOf(Generator::class, $generator = $this->SQLite->yieldAll('select 1 where 1 = 2'));
+        self::assertSame([], iterator_to_array($generator));
     }
 
     #[Test]
@@ -83,30 +83,30 @@ final class QueryTraitTest extends TestCase
         self::assertNull($this->SQLite->fetchObject('select 1 where 1 = 2'));
         self::assertSame([], $this->SQLite->fetchObjects('select 1 where 1 = 2'));
 
-        $Object = $this->SQLite->fetchObject('select 1');
-        self::assertInstanceOf(stdClass::class, $Object);
-        self::assertSame($Object->{1}, 1);
+        $object = $this->SQLite->fetchObject('select 1');
+        self::assertInstanceOf(stdClass::class, $object);
+        self::assertSame($object->{1}, 1);
 
-        $Object = $this->SQLite->fetchObject('select "bar" as foo');
-        self::assertInstanceOf(stdClass::class, $Object);
-        self::assertSame($Object->foo, 'bar');
+        $object = $this->SQLite->fetchObject('select "bar" as foo');
+        self::assertInstanceOf(stdClass::class, $object);
+        self::assertSame($object->foo, 'bar');
 
         $objects = $this->SQLite->fetchObjects('select "bar" as foo');
-        self::assertEquals([$Object], $objects);
+        self::assertEquals([$object], $objects);
 
-        $Object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class);
-        self::assertInstanceOf(WithPrivateConstructor::class, $Object);
-        self::assertSame(date('Y-m-d'), $this->getProperty($Object, 'private', true)->getValue($Object));
+        $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class);
+        self::assertInstanceOf(WithPrivateConstructor::class, $object);
+        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private', true)->getValue($object));
 
-        $Object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class, ['public set']);
-        self::assertSame(date('Y-m-d'), $this->getProperty($Object, 'private', true)->getValue($Object));
-        self::assertSame('public set', $this->getProperty($Object, 'public', true)->getValue($Object));
-        self::assertSame(2, $this->getProperty($Object, 'protected', true)->getValue($Object));
+        $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class, ['public set']);
+        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private', true)->getValue($object));
+        self::assertSame('public set', $this->getProperty($object, 'public', true)->getValue($object));
+        self::assertSame(2, $this->getProperty($object, 'protected', true)->getValue($object));
 
-        $Object = $this->SQLite->fetchObject('select date(:d, "localtime") as `public`, "protected" as protected', ['d' => 'now'], WithPrivateConstructor::class);
-        self::assertSame(date('Y-m-d'), $this->getProperty($Object, 'public', true)->getValue($Object));
-        self::assertSame('protected', $this->getProperty($Object, 'protected', true)->getValue($Object));
-        self::assertSame(3, $this->getProperty($Object, 'private', true)->getValue($Object));
+        $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `public`, "protected" as protected', ['d' => 'now'], WithPrivateConstructor::class);
+        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'public', true)->getValue($object));
+        self::assertSame('protected', $this->getProperty($object, 'protected', true)->getValue($object));
+        self::assertSame(3, $this->getProperty($object, 'private', true)->getValue($object));
     }
 
     #[Test]
@@ -129,23 +129,23 @@ final class QueryTraitTest extends TestCase
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
 
-        $Object = $this->SQLite->fetchObject('select "foo" as id', [], WithNoConstructor::class);
-        self::assertInstanceOf(WithNoConstructor::class, $Object);
-        self::assertSame('foo', $Object->id);
+        $object = $this->SQLite->fetchObject('select "foo" as id', [], WithNoConstructor::class);
+        self::assertInstanceOf(WithNoConstructor::class, $object);
+        self::assertSame('foo', $object->id);
     }
 
     #[Test]
     public function it_should_fetch_object_of_non_existin_class(): void
     {
-        $this->expectException(ReflectionException::class);
-        $this->expectExceptionMessage('Class "foo" does not exist');
-
         $table = __METHOD__;
         $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         self::assertTrue($table->exists());
         $table->push(['id' => '1']);
 
+        $this->expectException(ReflectionException::class);
+        $this->expectExceptionMessage('Class "foo" does not exist');
+        /** @phpstan-ignore argument.type */
         $this->SQLite->fetchObject('select 1', [], 'foo');
     }
 
@@ -301,35 +301,46 @@ final class QueryTraitTest extends TestCase
     public function it_should_yield_instances(): void
     {
         $tablename = __METHOD__;
-        $table = $this->SQLite->{$tablename};
+        $table = $this->SQLite->$tablename;
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
         $table->push(['id' => 2]);
 
-        $Instance = $this->SQLite->fetchInstance("select * from `{$tablename}`");
-        self::assertInstanceOf(stdClass::class, $Instance);
+        $instance = $this->SQLite->fetchInstance("select * from `$tablename`");
+        self::assertInstanceOf(stdClass::class, $instance);
 
-        $Instance = $this->SQLite->fetchInstance("select rowid, id+10 from `{$tablename}`", [], WithDebugConstructor::class);
-        self::assertInstanceOf(WithDebugConstructor::class, $Instance);
+        $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], WithDebugConstructor::class);
+        self::assertInstanceOf(WithDebugConstructor::class, $instance);
 
         // cannot instantiate an abstract class
-        $Instance = $this->SQLite->fetchInstance("select rowid, id+10 from `{$tablename}`", [], AbstractClass::class);
-        self::assertNull($Instance);
+        $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], AbstractClass::class);
+        self::assertNull($instance);
 
         // cannot instantiate a class with private constructor
-        $Instance = $this->SQLite->fetchInstance("select rowid, id+10 from `{$tablename}`", [], WithPrivateConstructor::class);
-        self::assertNull($Instance);
+        $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], WithPrivateConstructor::class);
+        self::assertNull($instance);
 
         // no rows were returned
-        $Instance = $this->SQLite->fetchInstance("select date('now') from `{$tablename}` where rowid=-1");
-        self::assertNull($Instance);
+        $instance = $this->SQLite->fetchInstance("select date('now') from `$tablename` where rowid=-1");
+        self::assertNull($instance);
 
         // instance will be created but without giving constructor arguments
-        $Instance = $this->SQLite->fetchInstance("select rowid, id+10 from `{$tablename}`", [], WithNoConstructor::class);
-        self::assertInstanceOf(WithNoConstructor::class, $Instance);
+        $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], WithNoConstructor::class);
+        self::assertInstanceOf(WithNoConstructor::class, $instance);
 
-        $instances = $this->SQLite->fetchInstances("select rowid, id+10 from `{$tablename}`", [], WithDebugConstructor::class);
+        $instances = $this->SQLite->fetchInstances("select rowid, id+10 from `$tablename`", [], WithDebugConstructor::class);
         self::assertCount(2, $instances);
+    }
+
+    #[Test]
+    public function it_should_yield_objects(): void
+    {
+        $instances = $this->SQLite->fetchObjects("select 'foo'", class: WithDebugConstructor::class);
+
+        self::assertCount(1, $instances);
+
+        $instance = $instances[0];
+        self::assertInstanceOf(WithDebugConstructor::class, $instance);
     }
 
     #[Test]
