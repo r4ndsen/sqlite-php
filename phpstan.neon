@@ -1,0 +1,22 @@
+parameters:
+	level: 6
+	paths:
+		- src
+		- tests
+
+	reportUnmatchedIgnoredErrors: true
+
+	ignoreErrors:
+		- identifier: missingType.iterableValue
+		-
+			path: tests
+			identifier: property.notFound
+		-
+			path: tests/SQLite/Traits/QueryTraitTest.php
+			identifier: property.unused
+		-
+			path: tests/SQLite/Traits/QueryTraitTest.php
+			identifier: property.onlyWritten
+		-
+			path: tests/SQLite/Traits/QueryTraitTest.php
+			identifier: identical.alwaysTrue

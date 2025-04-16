@@ -1,0 +1,13 @@
+{
+    "$schema":"./vendor/phpbench/phpbench/phpbench.schema.json",
+    "runner.bootstrap": "vendor/autoload.php",
+    "runner.revs": 100000,
+    "runner.iterations": 2,
+    "runner.time_unit": "microseconds",
+    "report.outputs": {
+        "build-artifact": {
+            "renderer": "html",
+            "path": "coverage/bench.html"
+        }
+    }
+}
