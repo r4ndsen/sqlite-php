@@ -11,7 +11,7 @@ final class Transaction
 {
     use ExecTrait;
 
-    protected bool $active = false;
+    private bool $active = false;
 
     public function __construct(protected Connection $conn)
     {
@@ -24,12 +24,12 @@ final class Transaction
 
     public function begin(): self
     {
-        if (!$this->active) {
+        if ($this->active === false) {
             try {
-                $this->active = $this->exec('begin');
+                $this->exec('begin');
             } catch (QueryException) {
-                $this->active = true;
             }
+            $this->active = true;
         }
 
         return $this;
@@ -37,12 +37,12 @@ final class Transaction
 
     public function commit(): self
     {
-        if ($this->active) {
+        if ($this->active === true) {
             try {
-                $this->active = !$this->exec('commit');
+                $this->exec('commit');
             } catch (QueryException) {
-                $this->active = false;
             }
+            $this->active = false;
         }
 
         return $this;

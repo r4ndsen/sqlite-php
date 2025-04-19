@@ -7,10 +7,7 @@ namespace r4ndsen\SQLite;
 use Exception;
 use InvalidArgumentException;
 use r4ndsen\SQLite\Exception\BindValueException;
-use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
-use r4ndsen\SQLite\Exception\QueryException;
 use r4ndsen\SQLite\Exception\SQLiteException;
-use r4ndsen\SQLite\Exception\TableDoesNotExistException;
 use SQLite3Result;
 use SQLite3Stmt;
 use Stringable;
@@ -48,9 +45,7 @@ final class PreparedStatement
      * bind params from an indexed array to the sql statement.
      *
      * @throws BindValueException
-     * @throws QueryException
-     * @throws ColumnDoesNotExistException
-     * @throws TableDoesNotExistException
+     * @throws SQLiteException
      */
     public function bind(array $data, array $types = []): SQLite3Result
     {
@@ -69,7 +64,7 @@ final class PreparedStatement
      * bind params from an associated array to the sql statement.
      *
      * @throws BindValueException
-     * @throws QueryException
+     * @throws SQLiteException
      */
     public function bindAssoc(array $data, array $types = []): SQLite3Result
     {
@@ -97,7 +92,7 @@ final class PreparedStatement
         return $this;
     }
 
-    /** @throws QueryException */
+    /** @throws SQLiteException */
     public function execute(): SQLite3Result
     {
         if ($this->tx === null) {
@@ -111,6 +106,7 @@ final class PreparedStatement
         } finally {
             if (++$this->counter % $this->commitModulo === 0) {
                 $this->tx->commit()->begin();
+                $this->counter = 0;
             }
         }
     }

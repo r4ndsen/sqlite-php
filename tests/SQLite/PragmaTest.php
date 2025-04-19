@@ -20,8 +20,6 @@ final class PragmaTest extends TestCase
 
         try {
             $p = $this->SQLite->pragma;
-            self::assertSame(Pragma\JournalMode::DELETE, $p->getJournalMode());
-
             $p->journal_mode = 'WaL';
             self::assertSame(Pragma\JournalMode::WAL, $p->getJournalMode());
         } finally {

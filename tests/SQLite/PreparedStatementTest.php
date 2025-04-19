@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\BindValueException;
 use r4ndsen\SQLite\Exception\MissingParameterException;
+use r4ndsen\SQLite\Exception\QueryException;
 
 final class PreparedStatementTest extends TestCase
 {
@@ -45,19 +46,16 @@ final class PreparedStatementTest extends TestCase
     #[Test]
     public function it_should_bind_value_exception(): void
     {
-        $this->expectException(BindValueException::class);
-
-        $id = Column::createIntegerColumn('id');
         $content = Column::createDefaultColumn('content');
 
         $this->SQLite->test
-            ->addCreateColumn($id)
             ->addCreateColumn($content)
-            ->createIfNotExists()
+            ->create()
         ;
 
-        $stm = $this->SQLite->prepare($sql = 'insert into test (content) values (:c)');
+        $stm = $this->SQLite->prepare('insert into test (content) values (:c)');
 
+        $this->expectException(BindValueException::class);
         $stm->bindAssoc(['from prepared']);
     }
 
@@ -222,7 +220,7 @@ final class PreparedStatementTest extends TestCase
 
         $insert = $this->SQLite->prepare('insert into test (id) values (');
 
-        $this->expectException(Exception\QueryException::class);
+        $this->expectException(QueryException::class);
         $insert->bind([1]);
     }
 
