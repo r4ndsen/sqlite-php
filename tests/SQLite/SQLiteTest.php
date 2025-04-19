@@ -134,9 +134,7 @@ final class SQLiteTest extends TestCase
     {
         $this->expectException(SQLiteException::class);
         $this->expectExceptionMessageMatches(
-            '#^\*\*\* in database main \*\*\*
-(On tree|Tree 2) page 2 cell 0: Rowid 9 out of order
-Fragmentation of 1 bytes reported as 0 on page 2$#m'
+            "#^\*{3} in database main \*{3}\r?\n(On tree|Tree 2) page 2 cell 0: Rowid 9 out of order\r?\nFragmentation of 1 bytes reported as 0 on page 2$#m"
         );
 
         $s = new SQLite(self::FIXTURES_DIR . '/fragmentation.sqlite');
