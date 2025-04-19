@@ -35,7 +35,7 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_add_column(): void
     {
-        @unlink($tempdb = '/tmp/temp.sqlite');
+        @unlink($tempdb = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'temp.sqlite');
         $this->SQLite = new SQLite($tempdb);
         $t = $this->SQLite->table;
         $t->addCreateColumn(Column::createDefaultColumn('test'));
