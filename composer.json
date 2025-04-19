@@ -1,7 +1,7 @@
 {
   "name": "r4ndsen/sqlite-php",
   "type": "library",
-  "description": "this library will help you deal with sqlite3 databases",
+  "description": "this library will help you deal with sqlite3 databases in php",
   "keywords": [
     "SQLite",
     "SQLite3",
