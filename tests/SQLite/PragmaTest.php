@@ -15,7 +15,7 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_allow_setting_journal_mode_by_string(): void
     {
-        $path = sys_get_temp_dir() . '/test.sqlite';
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
         $this->SQLite = new SQLite($path);
 
         try {
@@ -32,7 +32,7 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_allow_setting_synchronous_by_integer(): void
     {
-        $path = sys_get_temp_dir() . '/test.sqlite';
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
         $this->SQLite = new SQLite($path);
 
         try {
@@ -52,7 +52,7 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_allow_setting_synchronous_by_string(): void
     {
-        $path = sys_get_temp_dir() . '/test.sqlite';
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
         $this->SQLite = new SQLite($path);
 
         try {
@@ -85,7 +85,7 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_get_and_set_locking_mode(): void
     {
-        $path = sys_get_temp_dir() . '/test.sqlite';
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
         $this->SQLite = new SQLite($path);
 
         try {
@@ -102,7 +102,7 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_get_and_set_temp_store(): void
     {
-        $path = sys_get_temp_dir() . '/test.sqlite';
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
         $this->SQLite = new SQLite($path);
 
         try {
@@ -180,7 +180,7 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_pragma_journal_mode(): void
     {
-        $path = sys_get_temp_dir() . '/test.sqlite';
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
 
         try {
             /** @var Pragma $pragma */
