@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite\Traits;
 
 use Generator;
-use r4ndsen\SQLite\Exception\BindValueException;
-use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
-use r4ndsen\SQLite\Exception\MissingParameterException;
-use r4ndsen\SQLite\Exception\QueryException;
-use r4ndsen\SQLite\Exception\TableDoesNotExistException;
+use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\PreparedStatement;
 use r4ndsen\SQLite\QueryParser;
 use ReflectionClass;
@@ -30,10 +26,7 @@ trait QueryTrait
     /**
      * the entire result set as array.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchAll(string $sql, array $bind = []): array
     {
@@ -43,10 +36,7 @@ trait QueryTrait
     /**
      * the values in the first selected column as an array.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchCol(string $sql, array $bind = []): array
     {
@@ -77,10 +67,7 @@ trait QueryTrait
      * @return T[]
      *
      * @throws ReflectionException
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws ColumnDoesNotExistException
-     * @throws TableDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchInstances(string $sql, array $bind = [], string $class = stdClass::class): array
     {
@@ -95,10 +82,7 @@ trait QueryTrait
      * @return T|null
      *
      * @throws ReflectionException
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchObject(string $sql, array $bind = [], string $class = stdClass::class, array $cArgs = []): ?object
     {
@@ -116,11 +100,8 @@ trait QueryTrait
      *
      * @return T[]
      *
+     * @throws SQLiteException
      * @throws ReflectionException
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
      */
     public function fetchObjects(string $sql, array $bind = [], string $class = stdClass::class, array $cArgs = []): array
     {
@@ -130,10 +111,7 @@ trait QueryTrait
     /**
      * the first row as an associative array where the keys are the column names.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchOne(string $sql, array $bind = []): ?array
     {
@@ -147,10 +125,7 @@ trait QueryTrait
     /**
      * returns a key-value pair from first result row. the first and second columns as key and value.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchPair(string $sql, array $bind = []): array
     {
@@ -164,10 +139,7 @@ trait QueryTrait
     /**
      * each result is a key-value pair from the first and second columns.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchPairs(string $sql, array $bind = []): array
     {
@@ -184,10 +156,7 @@ trait QueryTrait
      *
      * @return float|int|string|null
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function fetchValue(string $sql, array $bind = [])
     {
@@ -208,11 +177,7 @@ trait QueryTrait
      *
      * @return SQLite3Result The result of the executed statement
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws MissingParameterException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function perform(string $sql, array $bind = []): SQLite3Result
     {
@@ -229,11 +194,7 @@ trait QueryTrait
         return new PreparedStatement($this->conn, $sql);
     }
 
-    /**
-     * @throws ColumnDoesNotExistException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     */
+    /** @throws SQLiteException */
     public function query(string $sql): SQLite3Result
     {
         return $this->conn->query($sql);
@@ -248,9 +209,7 @@ trait QueryTrait
      *
      * @return array|bool|float|int|string|null
      *
-     * @throws ColumnDoesNotExistException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
+     * @throws SQLiteException
      */
     public function querySingle(string $sql, bool $entireRow = false): mixed
     {
@@ -262,10 +221,7 @@ trait QueryTrait
      *
      * @return Generator<array>
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function yieldAll(string $sql, array $bind = []): Generator
     {
@@ -277,10 +233,7 @@ trait QueryTrait
     /**
      * yields the values in the first column.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function yieldCol(string $sql, array $bind = []): Generator
     {
@@ -299,10 +252,7 @@ trait QueryTrait
      * @return Generator<T|null>
      *
      * @throws ReflectionException
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function yieldInstances(string $sql, array $bind = [], string $class = stdClass::class): Generator
     {
@@ -333,10 +283,7 @@ trait QueryTrait
      * @return Generator<T|null>
      *
      * @throws ReflectionException
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function yieldObjects(string $sql, array $bind = [], string $class = stdClass::class, array $cArgs = []): Generator
     {
@@ -380,8 +327,7 @@ trait QueryTrait
     /**
      * each result is a key-value pair from the first and second column.
      *
-     * @throws BindValueException
-     * @throws QueryException
+     * @throws SQLiteException
      */
     public function yieldPairs(string $sql, array $bind = []): Generator
     {
@@ -393,10 +339,7 @@ trait QueryTrait
     /**
      * yields all returned values without column names.
      *
-     * @throws BindValueException
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     * @throws ColumnDoesNotExistException
+     * @throws SQLiteException
      */
     public function yieldPlain(string $sql, array $bind = []): Generator
     {

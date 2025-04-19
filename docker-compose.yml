@@ -1,6 +1,6 @@
 services:
   php-8.2:
-    image: php:8.2-cli
+    image: phpstorm/php-cli:8.2-xdebug3.2
     volumes:
       - .:/app
     working_dir: /app
@@ -12,7 +12,7 @@ services:
                tail -f /dev/null"
 
   php-8.3:
-    image: php:8.3-cli
+    image: oanhnn/php:8.3-cli
     volumes:
       - .:/app
     working_dir: /app
@@ -24,7 +24,7 @@ services:
                tail -f /dev/null"
 
   php-8.4:
-    image: php:8.4-cli
+    image: oanhnn/php:8.4-cli
     volumes:
       - .:/app
     working_dir: /app
