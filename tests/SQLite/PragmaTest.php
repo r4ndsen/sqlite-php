@@ -12,56 +12,48 @@ use stdClass;
 
 final class PragmaTest extends TestCase
 {
+    private string $tempPath;
+
+    protected function setUp(): void
+    {
+        $this->tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
+        $this->SQLite = new SQLite($this->tempPath);
+    }
+    protected function tearDown(): void
+    {
+        $this->SQLite->getConnection()->close();
+        unlink($this->tempPath);
+    }
+
     #[Test]
     public function it_should_allow_setting_journal_mode_by_string(): void
     {
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
-        $this->SQLite = new SQLite($path);
-
-        try {
-            $p = $this->SQLite->pragma;
-            $p->journal_mode = 'WaL';
-            self::assertSame(Pragma\JournalMode::WAL, $p->getJournalMode());
-        } finally {
-            unlink($path);
-        }
+        $p = $this->SQLite->pragma;
+        $p->journal_mode = 'WaL';
+        self::assertSame(Pragma\JournalMode::WAL, $p->getJournalMode());
     }
 
     #[Test]
     public function it_should_allow_setting_synchronous_by_integer(): void
     {
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
-        $this->SQLite = new SQLite($path);
+        $p = $this->SQLite->pragma;
+        self::assertSame(Pragma\Synchronous::FULL, $p->getSynchronous());
 
-        try {
-            $p = $this->SQLite->pragma;
-            self::assertSame(Pragma\Synchronous::FULL, $p->getSynchronous());
+        foreach (range(0, 3) as $value) {
+            $p->synchronous = $value;
 
-            foreach (range(0, 3) as $value) {
-                $p->synchronous = $value;
-
-                self::assertSame(Pragma\Synchronous::from($value), $p->getSynchronous());
-            }
-        } finally {
-            unlink($path);
+            self::assertSame(Pragma\Synchronous::from($value), $p->getSynchronous());
         }
     }
 
     #[Test]
     public function it_should_allow_setting_synchronous_by_string(): void
     {
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
-        $this->SQLite = new SQLite($path);
+        $p = $this->SQLite->pragma;
+        self::assertSame(Pragma\Synchronous::FULL, $p->getSynchronous());
 
-        try {
-            $p = $this->SQLite->pragma;
-            self::assertSame(Pragma\Synchronous::FULL, $p->getSynchronous());
-
-            $p->synchronous = 'ExTrA';
-            self::assertSame(Pragma\Synchronous::EXTRA, $p->getSynchronous());
-        } finally {
-            unlink($path);
-        }
+        $p->synchronous = 'ExTrA';
+        self::assertSame(Pragma\Synchronous::EXTRA, $p->getSynchronous());
     }
 
     #[Test]
@@ -83,38 +75,24 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_get_and_set_locking_mode(): void
     {
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
-        $this->SQLite = new SQLite($path);
+        $p = $this->SQLite->pragma;
+        self::assertSame(Pragma\LockingMode::NORMAL, $p->getLockingMode());
 
-        try {
-            $p = $this->SQLite->pragma;
-            self::assertSame(Pragma\LockingMode::NORMAL, $p->getLockingMode());
-
-            $p->locking_mode = 'exCLusIve';
-            self::assertSame(Pragma\LockingMode::EXCLUSIVE, $p->getLockingMode());
-        } finally {
-            unlink($path);
-        }
+        $p->locking_mode = 'exCLusIve';
+        self::assertSame(Pragma\LockingMode::EXCLUSIVE, $p->getLockingMode());
     }
 
     #[Test]
     public function it_should_get_and_set_temp_store(): void
     {
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
-        $this->SQLite = new SQLite($path);
+        $p = $this->SQLite->pragma;
+        self::assertSame(Pragma\TempStore::DEFAULT, $p->getTempStore());
 
-        try {
-            $p = $this->SQLite->pragma;
-            self::assertSame(Pragma\TempStore::DEFAULT, $p->getTempStore());
+        $p->temp_store = 'File';
+        self::assertSame(Pragma\TempStore::FILE, $p->getTempStore());
 
-            $p->temp_store = 'File';
-            self::assertSame(Pragma\TempStore::FILE, $p->getTempStore());
-
-            $p->temp_store = 2;
-            self::assertSame(Pragma\TempStore::MEMORY, $p->getTempStore());
-        } finally {
-            unlink($path);
-        }
+        $p->temp_store = 2;
+        self::assertSame(Pragma\TempStore::MEMORY, $p->getTempStore());
     }
 
     #[Test]
@@ -178,23 +156,17 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_pragma_journal_mode(): void
     {
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
+        /** @var Pragma $pragma */
+        $pragma = $this->SQLite->pragma;
 
-        try {
-            /** @var Pragma $pragma */
-            $pragma = (new SQLite($path))->pragma;
-
-            foreach (Pragma\JournalMode::cases() as $mode) {
-                if ($mode === Pragma\JournalMode::OFF) {
-                    continue;
-                }
-
-                $pragma->setJournalMode($mode);
-
-                self::assertSame($mode, $pragma->getJournalMode());
+        foreach (Pragma\JournalMode::cases() as $mode) {
+            if ($mode === Pragma\JournalMode::OFF) {
+                continue;
             }
-        } finally {
-            unlink($path);
+
+            $pragma->setJournalMode($mode);
+
+            self::assertSame($mode, $pragma->getJournalMode());
         }
     }
 
