@@ -6,7 +6,7 @@
         ]
     },
     "logs": {
-        "html": "coverage/infection.html"
+        "html": "build/infection.html"
     },
     "mutators": {
         "@default": true

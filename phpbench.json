@@ -7,7 +7,7 @@
     "report.outputs": {
         "build-artifact": {
             "renderer": "html",
-            "path": "coverage/bench.html"
+            "path": "build/bench.html"
         }
     }
 }

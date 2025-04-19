@@ -15,13 +15,13 @@ csdiff:
 	vendor/bin/php-cs-fixer fix --stop-on-violation --verbose --dry-run --diff
 
 bench:
-	vendor/bin/phpbench run --report=aggregate --output=build-artifact tests/Benchmark && open ./coverage/bench.html
+	vendor/bin/phpbench run --report=aggregate --output=build-artifact tests/Benchmark && open ./build/bench.html
 
 infection:
-	XDEBUG_MODE=coverage vendor/bin/infection --no-progress --threads=max && open ./coverage/infection.html
+	XDEBUG_MODE=coverage vendor/bin/infection --no-progress --threads=max && open ./build/infection.html
 
 coverage:
-	XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html ./coverage && open ./coverage/index.html
+	XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html ./build/coverage && open ./build/coverage/index.html
 
 stan:
 	vendor/bin/phpstan analyze --memory-limit 2G

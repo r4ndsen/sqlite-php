@@ -8,7 +8,7 @@ use Exception;
 use r4ndsen\SQLite\Connection;
 use r4ndsen\SQLite\ErrorCode;
 
-final class QueryExceptionHandler
+final readonly class QueryExceptionHandler
 {
     public function __construct(private Connection $conn)
     {
