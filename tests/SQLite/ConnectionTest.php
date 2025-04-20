@@ -27,7 +27,7 @@ final class ConnectionTest extends TestCase
 
         self::assertSame([1, 3], $table->fetchCol('select rowid from foo'));
 
-        $secondTable = $main->getTable('bar')->getFixedInsertTable()->push(['my little' => 'pony'])->commit();
+        $main->getTable('bar')->getFixedInsertTable()->push(['my little' => 'pony'])->commit();
 
         $table->addIndex(new Index(Column::createDefaultColumn('data')));
 
@@ -201,7 +201,7 @@ final class ConnectionTest extends TestCase
 
         self::assertSame([1, 3], $table->fetchCol('select rowid from foo'));
 
-        $secondTable = $main->getTable('bar')->getFixedInsertTable()->push(['my little' => 'pony'])->commit();
+        $main->getTable('bar')->getFixedInsertTable()->push(['my little' => 'pony'])->commit();
 
         $table->addIndex(new Index(Column::createDefaultColumn('data')));
 

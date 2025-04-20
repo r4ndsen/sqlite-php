@@ -362,7 +362,7 @@ class WithPrivateConstructor
     private function __construct(
         public mixed $public = 1,
         protected mixed $protected = 2,
-        private readonly mixed $private = 3,
+        private mixed $private = 3,
     ) {
     }
 }
