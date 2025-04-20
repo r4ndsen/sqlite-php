@@ -42,16 +42,16 @@ final class FixedInsertTest extends TestCase
     public function it_should_fixed_insert_table_with_new_keys(): void
     {
         /** @var Table */
-        $Table = $this->SQLite->getTable('dynamicdata')->getFixedInsertTable();
-        self::assertFalse($Table->exists());
+        $table = $this->SQLite->getTable('dynamicdata')->getFixedInsertTable();
+        self::assertFalse($table->exists());
 
-        $Table->push(['foo' => '1']);
-        $Table->push(['rowid' => 321, 'foo' => '2']);
-        self::assertTrue($Table->exists());
-        self::assertCount(2, $Table);
-        self::assertSame(321, $Table->maxRow());
+        $table->push(['foo' => '1']);
+        $table->push(['rowid' => 321, 'foo' => '2']);
+        self::assertTrue($table->exists());
+        self::assertCount(2, $table);
+        self::assertSame(321, $table->maxRow());
 
         $this->expectException(ColumnDoesNotExistException::class);
-        $Table->push(['bar' => '1']);
+        $table->push(['bar' => '1']);
     }
 }

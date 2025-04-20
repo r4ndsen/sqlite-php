@@ -42,28 +42,28 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_create_blob_column(): void
     {
-        $C = Column::createBlobColumn('blob');
+        $c = Column::createBlobColumn('blob');
 
-        self::assertNull($C->getDefaultValue());
-        self::assertSame(ColumnType::BLOB, $C->getType());
+        self::assertNull($c->getDefaultValue());
+        self::assertSame(ColumnType::BLOB, $c->getType());
     }
 
     #[Test]
     public function it_should_create_float_column(): void
     {
-        $C = Column::createFloatColumn('float', null);
+        $c = Column::createFloatColumn('float', null);
 
-        self::assertNull($C->getDefaultValue());
-        self::assertSame(ColumnType::REAL, $C->getType());
+        self::assertNull($c->getDefaultValue());
+        self::assertSame(ColumnType::REAL, $c->getType());
     }
 
     #[Test]
     public function it_should_create_integer_column(): void
     {
-        $C = Column::createIntegerColumn('int');
+        $c = Column::createIntegerColumn('int');
 
-        self::assertNull($C->getDefaultValue());
-        self::assertSame(ColumnType::INTEGER, $C->getType());
+        self::assertNull($c->getDefaultValue());
+        self::assertSame(ColumnType::INTEGER, $c->getType());
     }
 
     #[Test]
@@ -122,10 +122,10 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_debug_info(): void
     {
-        $C = Column::createDefaultColumn('Test 1');
-        self::assertSame("`Test 1` TEXT default ''", $C->getCreateStatement());
+        $c = Column::createDefaultColumn('Test 1');
+        self::assertSame("`Test 1` TEXT default ''", $c->getCreateStatement());
 
-        $result = $C->__debugInfo();
+        $result = $c->__debugInfo();
 
         self::assertNull($result['column id']);
         self::assertSame('', $result['default value']);
@@ -141,66 +141,66 @@ final class ColumnTest extends TestCase
     {
         $this->expectException(BadFunctionCallException::class);
 
-        $C = Column::createTextColumn('test', null);
-        $C->disallowNull();
+        $c = Column::createTextColumn('test', null);
+        $c->disallowNull();
     }
 
     #[Test]
     public function it_should_get_create_statement(): void
     {
-        $C = Column::createDefaultColumn('Test 1');
-        self::assertSame("`Test 1` TEXT default ''", $C->getCreateStatement());
+        $c = Column::createDefaultColumn('Test 1');
+        self::assertSame("`Test 1` TEXT default ''", $c->getCreateStatement());
 
-        $C = Column::createDefaultColumn('Test 1');
-        $C->disallowNull();
+        $c = Column::createDefaultColumn('Test 1');
+        $c->disallowNull();
 
-        self::assertSame("`Test 1` TEXT default '' NOT NULL", $C->getCreateStatement());
-        $C->allowNull();
-        self::assertSame("`Test 1` TEXT default ''", $C->getCreateStatement());
+        self::assertSame("`Test 1` TEXT default '' NOT NULL", $c->getCreateStatement());
+        $c->allowNull();
+        self::assertSame("`Test 1` TEXT default ''", $c->getCreateStatement());
     }
 
     #[Test]
     public function it_should_get_escaped(): void
     {
-        $C = Column::createDefaultColumn('TeSt Ö 123 ');
-        self::assertSame('`TeSt Ö 123 `', $C->getEscaped());
-        self::assertSame('`test ö 123`', $C->getLowerTrimmedEscaped());
-        self::assertSame('test ö 123', $C->getTrimmedLower());
+        $c = Column::createDefaultColumn('TeSt Ö 123 ');
+        self::assertSame('`TeSt Ö 123 `', $c->getEscaped());
+        self::assertSame('`test ö 123`', $c->getLowerTrimmedEscaped());
+        self::assertSame('test ö 123', $c->getTrimmedLower());
 
-        $C = Column::createDefaultColumn('TeSt` 123');
-        self::assertSame('`TeSt`` 123`', (string) $C);
+        $c = Column::createDefaultColumn('TeSt` 123');
+        self::assertSame('`TeSt`` 123`', (string) $c);
 
-        $C = Column::createDefaultColumn("some ' thing");
-        self::assertSame("`some ' thing`", (string) $C);
+        $c = Column::createDefaultColumn("some ' thing");
+        self::assertSame("`some ' thing`", (string) $c);
     }
 
     #[Test]
     public function it_should_get_lower(): void
     {
-        $C = Column::createDefaultColumn('TeSt Ö 123 ');
+        $c = Column::createDefaultColumn('TeSt Ö 123 ');
 
-        self::assertSame('test ö 123 ', $C->getLower());
+        self::assertSame('test ö 123 ', $c->getLower());
     }
 
     #[Test]
     public function it_should_get_plain(): void
     {
-        $C = Column::createDefaultColumn('TeSt 123');
+        $c = Column::createDefaultColumn('TeSt 123');
 
-        self::assertSame('TeSt 123', $C->getPlain());
+        self::assertSame('TeSt 123', $c->getPlain());
     }
 
     #[Test]
     public function it_should_methods(): void
     {
-        $C = Column::createDefaultColumn('test');
-        self::assertSame(ColumnType::TEXT, $C->getType());
-        self::assertSame('', $C->getDefaultValue());
-        self::assertNull($C->getColumnId());
-        self::assertNull($C->getPk());
-        self::assertSame('`test`', (string) $C);
-        self::assertSame('test', $C->getLower());
-        self::assertSame('test', $C->getPlain());
+        $c = Column::createDefaultColumn('test');
+        self::assertSame(ColumnType::TEXT, $c->getType());
+        self::assertSame('', $c->getDefaultValue());
+        self::assertNull($c->getColumnId());
+        self::assertNull($c->getPk());
+        self::assertSame('`test`', (string) $c);
+        self::assertSame('test', $c->getLower());
+        self::assertSame('test', $c->getPlain());
     }
 
     #[Test]

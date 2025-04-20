@@ -46,8 +46,8 @@ final class EscapeTraitTest extends TestCase
     #[Test]
     public function it_should_escape_trait(): void
     {
-        $A = $this->SQLite;
-        self::assertSame("''", $A->escape("'"));
-        self::assertSame("`'`", $A->backtick("'"));
+        $a = $this->SQLite;
+        self::assertSame("''", $a->escape("'"));
+        self::assertSame("`'`", $a->backtick("'"));
     }
 }

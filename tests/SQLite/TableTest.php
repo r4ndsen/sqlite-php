@@ -141,21 +141,21 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_add_constraint_add_index2(): void
     {
-        $C = Column::createDefaultColumn('test');
+        $c = Column::createDefaultColumn('test');
 
-        $Index = new Index();
-        $Index
-            ->addIndexedColumn($C)
+        $index = new Index();
+        $index
+            ->addIndexedColumn($c)
             ->setUnique()
             ->setWhere('1=2')
         ;
 
         $this->SQLite->table
-            ->addCreateColumn($C)
+            ->addCreateColumn($c)
             ->create()
         ;
 
-        self::assertTrue($this->SQLite->table->addIndex($Index));
+        self::assertTrue($this->SQLite->table->addIndex($index));
     }
 
     #[Test]

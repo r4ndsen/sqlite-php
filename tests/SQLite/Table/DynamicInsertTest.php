@@ -21,77 +21,77 @@ final class DynamicInsertTest extends TestCase
     #[Test]
     public function it_should_create_multibyte_column_name(): void
     {
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
 
-        self::assertFalse($Table->exists());
-        $Table->push(['Ä ' => 'foo']);
-        self::assertCount(1, $Table);
+        self::assertFalse($table->exists());
+        $table->push(['Ä ' => 'foo']);
+        self::assertCount(1, $table);
 
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertTrue($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertTrue($table->exists());
 
-        $Table->push([' ä' => 'bar']);
-        self::assertCount(2, $Table);
+        $table->push([' ä' => 'bar']);
+        self::assertCount(2, $table);
         self::assertSame(
             [
                 ['Ä' => 'foo'],
                 ['Ä' => 'bar'],
             ],
-            $Table->toArray()
+            $table->toArray()
         );
     }
 
     #[Test]
     public function it_should_create_multibyte_column_name_lowercased(): void
     {
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertFalse($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertFalse($table->exists());
 
-        $Table->push(['ä' => 'foo']);
+        $table->push(['ä' => 'foo']);
 
-        self::assertTrue($Table->exists());
-        self::assertCount(1, $Table);
+        self::assertTrue($table->exists());
+        self::assertCount(1, $table);
     }
 
     #[Test]
     public function it_should_create_multibyte_column_name_uppercased(): void
     {
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertFalse($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertFalse($table->exists());
 
-        $Table->push(['Ä ' => 'foo']);
-        $Table->push([' ä' => 'bar']);
+        $table->push(['Ä ' => 'foo']);
+        $table->push([' ä' => 'bar']);
 
-        self::assertTrue($Table->exists());
-        self::assertCount(2, $Table);
+        self::assertTrue($table->exists());
+        self::assertCount(2, $table);
 
         self::assertSame(
             [
                 ['Ä' => 'foo'],
                 ['Ä' => 'bar'],
             ],
-            $Table->toArray()
+            $table->toArray()
         );
     }
 
     #[Test]
     public function it_should_create_multibyte_column_name_uppercased_reverse(): void
     {
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertFalse($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertFalse($table->exists());
 
-        $Table->push(['ä' => 'bar']);
-        $Table->push([' Ä' => 'foo']);
+        $table->push(['ä' => 'bar']);
+        $table->push([' Ä' => 'foo']);
 
-        self::assertTrue($Table->exists());
-        self::assertCount(2, $Table);
+        self::assertTrue($table->exists());
+        self::assertCount(2, $table);
 
         self::assertSame(
             [
                 ['ä' => 'bar'],
                 ['ä' => 'foo'],
             ],
-            $Table->toArray()
+            $table->toArray()
         );
     }
 
@@ -105,15 +105,15 @@ final class DynamicInsertTest extends TestCase
     {
         $this->SQLite->exec('create table dynamicdata (` Ä ` TEXT)');
 
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertTrue($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertTrue($table->exists());
 
-        $Table->push(['ä ' => 'foo']);
-        $Table->push([' ä ' => 'bar']);
-        $Table->push(['Ä ' => 'baz']);
+        $table->push(['ä ' => 'foo']);
+        $table->push([' ä ' => 'bar']);
+        $table->push(['Ä ' => 'baz']);
 
-        self::assertTrue($Table->exists());
-        self::assertCount(3, $Table);
+        self::assertTrue($table->exists());
+        self::assertCount(3, $table);
 
         self::assertSame(
             [
@@ -121,7 +121,7 @@ final class DynamicInsertTest extends TestCase
                 [' Ä ' => 'bar'],
                 [' Ä ' => 'baz'],
             ],
-            $Table->toArray()
+            $table->toArray()
         );
     }
 
@@ -130,12 +130,12 @@ final class DynamicInsertTest extends TestCase
     {
         $this->SQLite->exec('create table dynamicdata (` Ää`,`Ää`,`äÄ `)');
 
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertTrue($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertTrue($table->exists());
 
         $this->expectException(ColumnNameAmbiguousException::class);
         $this->expectExceptionMessage('column name Ää is ambiguous');
-        $Table->push([]);
+        $table->push([]);
     }
 
     #[Test]
@@ -374,10 +374,10 @@ final class DynamicInsertTest extends TestCase
     public function it_should_dynamic_insert_with_rename(): void
     {
         $table = $this->SQLite->table->getDynamicInsertTable();
-        $colFrom = Column::createDefaultColumn('a');
-        $colTo = Column::createDefaultColumn('b');
+        $colfrom = Column::createDefaultColumn('a');
+        $colto = Column::createDefaultColumn('b');
         $table->push(['a' => 1]);
-        $table->renameColumn($colFrom, $colTo);
+        $table->renameColumn($colfrom, $colto);
         $table->push(['b' => 2]);
 
         self::assertSame([['b' => '1'], ['b' => '2']], $table->toArray());
@@ -477,12 +477,12 @@ final class DynamicInsertTest extends TestCase
     {
         $this->SQLite->exec('create table dynamicdata (`Ää`,`äÄ `)');
 
-        $Table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertTrue($Table->exists());
+        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
+        self::assertTrue($table->exists());
 
         $this->expectException(ColumnNameAmbiguousException::class);
         $this->expectExceptionMessage('column name äÄ is ambiguous');
-        $Table->push([]);
+        $table->push([]);
     }
 
     #[Test]

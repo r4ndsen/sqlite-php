@@ -117,8 +117,8 @@ final class QueryTraitTest extends TestCase
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
 
-        $Object = $this->SQLite->fetchObject('select 1 as id', [], AbstractClass::class);
-        self::assertNull($Object);
+        $object = $this->SQLite->fetchObject('select 1 as id', [], AbstractClass::class);
+        self::assertNull($object);
     }
 
     #[Test]
@@ -362,7 +362,7 @@ class WithPrivateConstructor
     private function __construct(
         public mixed $public = 1,
         protected mixed $protected = 2,
-        private mixed $private = 3,
+        private readonly mixed $private = 3,
     ) {
     }
 }

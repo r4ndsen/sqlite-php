@@ -84,52 +84,52 @@ final class PreparedStatementTest extends TestCase
     #[Test]
     public function it_should_data_is_not_persisted_when_not_referenced_anymore(): void
     {
-        $SQLite = new SQLite('test.sqlite');
-        $SQLite->getTable('test')->drop();
-        $SQLite->test->getDynamicInsertTable()->push(['id' => '1']);
-        $SQLite->test->getDynamicInsertTable()->push(['title' => 'foo']);
-        $SQLite->test->getDynamicInsertTable()->push(['title' => 'bar']);
+        $sqlite = new SQLite('test.sqlite');
+        $sqlite->getTable('test')->drop();
+        $sqlite->test->getDynamicInsertTable()->push(['id' => '1']);
+        $sqlite->test->getDynamicInsertTable()->push(['title' => 'foo']);
+        $sqlite->test->getDynamicInsertTable()->push(['title' => 'bar']);
 
-        $SQLite = new SQLite('test.sqlite');
-        self::assertCount(3, $SQLite->test);
+        $sqlite = new SQLite('test.sqlite');
+        self::assertCount(3, $sqlite->test);
     }
 
     #[Test]
     public function it_should_data_is_not_persisted_when_opening_new_instance(): void
     {
-        $SQLite = new SQLite('test.sqlite');
-        $SQLite->getTable('test')->drop();
-        $table = $SQLite->getTable('test')->getDynamicInsertTable();
+        $sqlite = new SQLite('test.sqlite');
+        $sqlite->getTable('test')->drop();
+        $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
         $table->push(['title' => 'bar']);
 
-        $SQLite = new SQLite('test.sqlite');
-        self::assertCount(1, $SQLite->test);
+        $sqlite = new SQLite('test.sqlite');
+        self::assertCount(1, $sqlite->test);
     }
 
     #[Test]
     public function it_should_data_is_persisted_after_commit(): void
     {
-        $SQLite = new SQLite('test.sqlite');
-        $SQLite->getTable('test')->drop();
-        $table = $SQLite->getTable('test')->getDynamicInsertTable();
+        $sqlite = new SQLite('test.sqlite');
+        $sqlite->getTable('test')->drop();
+        $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
         $table->push(['title' => 'bar']);
-        $SQLite->getConnection()->getTransaction()->commit();
+        $sqlite->getConnection()->getTransaction()->commit();
 
-        $SQLite = new SQLite('test.sqlite');
-        self::assertCount(3, $SQLite->test);
+        $sqlite = new SQLite('test.sqlite');
+        self::assertCount(3, $sqlite->test);
     }
 
     #[Test]
     public function it_should_data_is_persisted_after_destructing_the_prepared_statement(): void
     {
-        $SQLite = new SQLite('test.sqlite');
-        $SQLite->getTable('test')->drop();
+        $sqlite = new SQLite('test.sqlite');
+        $sqlite->getTable('test')->drop();
 
-        $table = $SQLite->test->getDynamicInsertTable();
+        $table = $sqlite->test->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
         $table->push(['title' => 'bar']);
@@ -137,7 +137,7 @@ final class PreparedStatementTest extends TestCase
         // destruct prepared statement within the table
         unset($table);
 
-        self::assertCount(3, $SQLite->test);
+        self::assertCount(3, $sqlite->test);
     }
 
     #[Test]
@@ -182,7 +182,7 @@ final class PreparedStatementTest extends TestCase
 
         $this->expectException(MissingParameterException::class);
         $this->expectExceptionMessage('Parameter 1 is missing from the bound values');
-        $result = $this->SQLite->fetchCol('select id from test where id in (?)', ['ids' => [0, 1, '', '\\']]);
+        $this->SQLite->fetchCol('select id from test where id in (?)', ['ids' => [0, 1, '', '\\']]);
     }
 
     #[Test]
@@ -257,8 +257,6 @@ final class PreparedStatementTest extends TestCase
         self::assertSame($sql, $stm->getSQL(false));
         self::assertSame("insert into test (content) values ('foo')", $stm->getSQL(true));
 
-        self::assertInstanceOf(PreparedStatement::class, $stm);
-
         $stm->setCommitModulo(1);
 
         $stm->bindAssoc(['content' => 'from prepared']);
@@ -281,7 +279,6 @@ final class PreparedStatementTest extends TestCase
 
         $stm = $this->SQLite->prepare($sql = 'insert into test (content) values (:content)');
         self::assertSame($sql, $stm->getQueryString());
-        self::assertInstanceOf(PreparedStatement::class, $stm);
 
         $stm->setCommitModulo(1);
 
@@ -306,14 +303,14 @@ final class PreparedStatementTest extends TestCase
     #[Test]
     public function it_should_transaction_is_committed_when_calling_count(): void
     {
-        $SQLite = new SQLite('test.sqlite');
-        $SQLite->getTable('test')->drop();
-        $table = $SQLite->getTable('test')->getDynamicInsertTable();
+        $sqlite = new SQLite('test.sqlite');
+        $sqlite->getTable('test')->drop();
+        $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
         $table->push(['title' => 'bar']);
 
-        self::assertCount(3, $SQLite->test);
+        self::assertCount(3, $sqlite->test);
     }
 
     #[Test]

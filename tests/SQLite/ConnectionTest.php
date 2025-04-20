@@ -208,7 +208,7 @@ final class ConnectionTest extends TestCase
         $mainSchema = $main->fetchAll('select * from sqlite_master');
 
         $backup = new SQLite();
-        $result = $main->getConnection()->backup($backup->getConnection());
+        $main->getConnection()->backup($backup->getConnection());
 
         $backupSchema = $backup->fetchAll('select * from sqlite_master');
 

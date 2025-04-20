@@ -69,12 +69,12 @@ final class SQLiteTest extends TestCase
     #[Test]
     public function it_should_memory_database(): void
     {
-        $SQLite = new SQLite(':memory:');
-        self::assertSame(':memory:', $SQLite->path);
+        $sqlite = new SQLite(':memory:');
+        self::assertSame(':memory:', $sqlite->path);
 
-        $SQLite = new SQLite();
-        self::assertSame(':memory:', $SQLite->path);
-        self::assertInstanceOf(SQLite3::class, $SQLite->getConnection());
+        $sqlite = new SQLite();
+        self::assertSame(':memory:', $sqlite->path);
+        self::assertInstanceOf(SQLite3::class, $sqlite->getConnection());
     }
 
     #[Test]

@@ -30,8 +30,8 @@ final class IndexTest extends TestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        $Index = new Index();
-        $Index->getCreateStatement();
+        $index = new Index();
+        $index->getCreateStatement();
     }
 
     #[Test]
@@ -39,30 +39,30 @@ final class IndexTest extends TestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        $Index = new Index();
-        $Index->addIndexedColumn(Column::createDefaultColumn('id'));
-        self::assertSame('CREATE INDEX if not exists `id` on %s (`id`)', $Index->getCreateStatement());
+        $index = new Index();
+        $index->addIndexedColumn(Column::createDefaultColumn('id'));
+        self::assertSame('CREATE INDEX if not exists `id` on %s (`id`)', $index->getCreateStatement());
 
-        $Index->addIndexedColumn(Column::createDefaultColumn('id2'));
-        $Index->setUnique();
+        $index->addIndexedColumn(Column::createDefaultColumn('id2'));
+        $index->setUnique();
 
-        self::assertSame('CREATE UNIQUE INDEX if not exists `id` on %s (`id`, `id2`)', $Index->getCreateStatement());
+        self::assertSame('CREATE UNIQUE INDEX if not exists `id` on %s (`id`, `id2`)', $index->getCreateStatement());
     }
 
     #[Test]
     public function it_should_index_set_name(): void
     {
-        $Index = new Index(Column::createDefaultColumn('id'));
-        self::assertSame('CREATE INDEX if not exists `id` on %s (`id`)', $Index->getCreateStatement());
+        $index = new Index(Column::createDefaultColumn('id'));
+        self::assertSame('CREATE INDEX if not exists `id` on %s (`id`)', $index->getCreateStatement());
 
-        $Index->addIndexedColumn($C = Column::createDefaultColumn('id2'));
-        $Index->setUnique();
+        $index->addIndexedColumn($c = Column::createDefaultColumn('id2'));
+        $index->setUnique();
 
-        $Index->setName($C);
+        $index->setName($c);
 
-        $Index->setName(' Name 1 2 ');
-        $Index->setWhere('1=1');
+        $index->setName(' Name 1 2 ');
+        $index->setWhere('1=1');
 
-        self::assertSame('CREATE UNIQUE INDEX if not exists `name 1 2` on %s (`id`, `id2`) where 1=1', $Index->getCreateStatement());
+        self::assertSame('CREATE UNIQUE INDEX if not exists `name 1 2` on %s (`id`, `id2`) where 1=1', $index->getCreateStatement());
     }
 }

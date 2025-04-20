@@ -36,24 +36,25 @@ final class TransactionTest extends TestCase
         $id = Column::createIntegerColumn('id');
         $content = Column::createDefaultColumn('content');
 
-        $this->SQLite->getTable('test')
+        $table = $this->SQLite->getTable('test');
+        $table
             ->addCreateColumn($id)
             ->addCreateColumn($content)
             ->createIfNotExists()
         ;
 
-        $preparedStatement = $this->SQLite->prepare('insert into `test` (id, content) values (?, ?)');
-        $preparedStatement->activateTransaction();
-        $preparedStatement->setCommitModulo(1);
+        $preparedstatement = $this->SQLite->prepare('insert into `test` (id, content) values (?, ?)');
+        $preparedstatement->activateTransaction();
+        $preparedstatement->setCommitModulo(1);
 
-        $preparedStatement->bind(['1', 'foo']);
-        $preparedStatement->bind(['2', 'bar']);
-        $preparedStatement->commit();
-        self::assertCount(2, $this->SQLite->getTable('test'));
-        $preparedStatement->deactivateTransaction();
+        $preparedstatement->bind(['1', 'foo']);
+        $preparedstatement->bind(['2', 'bar']);
+        $preparedstatement->commit();
+        self::assertCount(2, $table);
+        $preparedstatement->deactivateTransaction();
 
-        $preparedStatement->bind(['3', 'baz']);
-        self::assertCount(3, $this->SQLite->getTable('test'));
+        $preparedstatement->bind(['3', 'baz']);
+        self::assertCount(3, $table);
     }
 
     #[Test]
@@ -62,22 +63,23 @@ final class TransactionTest extends TestCase
         $id = Column::createIntegerColumn('id');
         $content = Column::createDefaultColumn('content');
 
-        $this->SQLite->getTable('test')
+        $table = $this->SQLite->getTable('test');
+        $table
             ->addCreateColumn($id)
             ->addCreateColumn($content)
             ->createIfNotExists()
         ;
 
-        $preparedStatement = $this->SQLite->prepare('insert into `test` (id, content) values (?, ?)');
-        $preparedStatement->activateTransaction();
-        $preparedStatement->setCommitModulo(10);
+        $preparedstatement = $this->SQLite->prepare('insert into `test` (id, content) values (?, ?)');
+        $preparedstatement->activateTransaction();
+        $preparedstatement->setCommitModulo(10);
 
-        $preparedStatement->bind(['1', 'foo']);
-        $preparedStatement->bind(['2', 'bar']);
-        $preparedStatement->deactivateTransaction(); // auto commit
-        self::assertCount(2, $this->SQLite->getTable('test'));
+        $preparedstatement->bind(['1', 'foo']);
+        $preparedstatement->bind(['2', 'bar']);
+        $preparedstatement->deactivateTransaction(); // auto commit
+        self::assertCount(2, $table);
 
-        $preparedStatement->bind(['3', 'baz']);
-        self::assertCount(3, $this->SQLite->getTable('test'));
+        $preparedstatement->bind(['3', 'baz']);
+        self::assertCount(3, $table);
     }
 }

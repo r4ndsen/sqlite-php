@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use PHPUnit\Framework\Attributes\Test;
-use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\AttachedDatabaseException;
 
 final class AttachedTest extends TestCase
@@ -33,21 +32,6 @@ final class AttachedTest extends TestCase
         self::assertTrue($this->SQLite->attach($this->attachedFile, 'one'));
         $this->SQLite->attach($this->attachedFile, 'one');
     }
-
-    /*public function testAttachWithDatabaseAlias(): void
-    {
-        $SQLite = new SQLite();
-        $SQLite->attach($this->attachedFile, 'A');
-        $Attached = $SQLite->getAttached('A');
-
-        self::assertSame('A', $Attached->getConnection()->getAlias());
-        self::assertSame('data', $Attached->getTable('data')->getName());
-        self::assertSame('A', $Attached->getTable('data')->getDatabaseAlias());
-
-        self::assertSame('main', $SQLite->getConnection()->getAlias());
-        self::assertSame('data', $SQLite->getTable('data')->getName());
-        self::assertSame('main', $SQLite->getTable('data')->getDatabaseAlias());
-    }*/
 
     #[Test]
     public function it_should_attach_already_in_use(): void
@@ -85,7 +69,7 @@ final class AttachedTest extends TestCase
         $this->expectException(AttachedDatabaseException::class);
 
         self::assertTrue($this->SQLite->attach($this->attachedFile, 'one'));
-        $Attached = $this->SQLite->getAttached('one');
+        $this->SQLite->getAttached('one');
         self::assertTrue($this->SQLite->detach('one'));
         $this->SQLite->getAttached('one');
     }
