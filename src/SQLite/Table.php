@@ -268,9 +268,9 @@ class Table implements Countable, IteratorAggregate, Stringable
     {
         $search = mb_strtolower(trim($name), 'UTF-8');
 
-        foreach ($this->columns() as $Column) {
-            if ($Column->getTrimmedLower() === $search) {
-                return $Column;
+        foreach ($this->columns() as $column) {
+            if ($column->getTrimmedLower() === $search) {
+                return $column;
             }
         }
 
