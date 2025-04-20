@@ -29,7 +29,7 @@ final class TableTest extends TestCase
             $this->expectException(TableDoesNotExistException::class);
         }
 
-        $this->SQLite->perform('alter table `foo` drop column `bar`');
+        $this->SQLite->exec('alter table `foo` drop column `bar`');
     }
 
     #[Test]

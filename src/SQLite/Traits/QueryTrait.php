@@ -172,23 +172,7 @@ trait QueryTrait
         return $this->conn->lastInsertRowID();
     }
 
-    /**
-     * create a prepared statement and bind associative params to it.
-     *
-     * @return SQLite3Result The result of the executed statement
-     *
-     * @throws SQLiteException
-     */
-    public function perform(string $sql, array $bind = []): SQLite3Result
-    {
-        $parser = new QueryParser($sql, $bind);
-        $sql = $parser->getStatement();
-        $bind = $parser->getValues();
-
-        return $this->prepare($sql)->bindAssoc($bind);
-    }
-
-    /** create a prepared statement from a sql string. */
+    // create a prepared statement from a sql string
     public function prepare(string $sql): PreparedStatement
     {
         return new PreparedStatement($this->conn, $sql);
@@ -262,13 +246,15 @@ trait QueryTrait
             return yield;
         }
 
+        $result = $this->yieldAll($sql, $bind);
+
         // check whether a constructor is defined
         if ($reflectionClass->getConstructor() === null) {
-            foreach ($this->yieldAll($sql, $bind) as $ignored) {
+            foreach ($result as $ignored) {
                 yield new $class();
             }
         } else {
-            foreach ($this->yieldAll($sql, $bind) as $row) {
+            foreach ($result as $row) {
                 yield $reflectionClass->newInstanceArgs(array_values($row));
             }
         }
@@ -343,9 +329,9 @@ trait QueryTrait
      */
     public function yieldPlain(string $sql, array $bind = []): Generator
     {
-        $res = $this->perform($sql, $bind);
+        $result = $this->perform($sql, $bind);
 
-        yield from $this->fetchArray($res, SQLITE3_NUM);
+        yield from $this->fetchArray($result, SQLITE3_NUM);
     }
 
     /** yields the result of an SQLite3Result object as an array per row */
@@ -355,5 +341,21 @@ trait QueryTrait
             yield $row;
         }
         $result->finalize();
+    }
+
+    /**
+     * create a prepared statement and bind associative params to it.
+     *
+     * @return SQLite3Result The result of the executed statement
+     *
+     * @throws SQLiteException
+     */
+    private function perform(string $sql, array $bind = []): SQLite3Result
+    {
+        $parser = new QueryParser($sql, $bind);
+        $sql = $parser->getStatement();
+        $bind = $parser->getValues();
+
+        return $this->prepare($sql)->bindAssoc($bind);
     }
 }

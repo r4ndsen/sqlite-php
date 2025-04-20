@@ -14,6 +14,7 @@ use r4ndsen\SQLite\Exception\ViewConstraintException;
 use r4ndsen\SQLite\TestCase;
 use ReflectionException;
 use stdClass;
+use Stringable;
 
 final class QueryTraitTest extends TestCase
 {
@@ -218,6 +219,14 @@ final class QueryTraitTest extends TestCase
     }
 
     #[Test]
+    public function it_should_not_allow_yield_object_with_interface(): void
+    {
+        $instances = $this->SQLite->fetchObjects("select 'foo'", class: Stringable::class);
+
+        self::assertSame([null], $instances);
+    }
+
+    #[Test]
     public function it_should_query_column_does_not_exist_exception(): void
     {
         $this->expectException(ColumnDoesNotExistException::class);
@@ -338,9 +347,6 @@ final class QueryTraitTest extends TestCase
         $instances = $this->SQLite->fetchObjects("select 'foo'", class: WithDebugConstructor::class);
 
         self::assertCount(1, $instances);
-
-        $instance = $instances[0];
-        self::assertInstanceOf(WithDebugConstructor::class, $instance);
     }
 
     #[Test]

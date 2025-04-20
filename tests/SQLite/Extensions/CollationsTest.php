@@ -48,7 +48,7 @@ final class CollationsTest extends TestCase
     public function it_should_collation_does_not_exist2(): void
     {
         $this->expectException(CollationDoesNotExistException::class);
-        $this->SQLite->perform('select * from data order by id COLLATE FOO');
+        $this->SQLite->exec('select * from data order by id COLLATE FOO');
     }
 
     #[Test]

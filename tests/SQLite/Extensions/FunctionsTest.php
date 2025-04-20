@@ -22,7 +22,7 @@ final class FunctionsTest extends TestCase
     public function it_should_function_does_not_exist2(): void
     {
         $this->expectException(FunctionDoesNotExistException::class);
-        $this->SQLite->perform('select foo()');
+        $this->SQLite->exec('select foo()');
     }
 
     #[Test]

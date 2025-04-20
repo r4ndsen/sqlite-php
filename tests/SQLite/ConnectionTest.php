@@ -185,7 +185,7 @@ final class ConnectionTest extends TestCase
 
         $this->expectException(Exception\MissingParameterException::class);
         $this->expectExceptionMessage("Parameter 'foo' is missing from the bound values");
-        $d->perform('select :foo');
+        $d->fetchValue('select :foo');
     }
 
     #[Test]
