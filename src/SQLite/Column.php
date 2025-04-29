@@ -13,9 +13,10 @@ final class Column implements CreateColumnInterface, Stringable
 {
     use EscapeTrait;
 
-    public const DEFAULT_VALUE = '';
     public const NOT_NULL = 'NOT NULL';
     public const ROWID = 'rowid';
+
+    public readonly ?string $defaultValue;
 
     /** Column id, will be populated by the table the column is placed in */
     private int $columnId;
@@ -25,14 +26,20 @@ final class Column implements CreateColumnInterface, Stringable
     /** Primary key flag, will be populated by the table the column is placed in */
     private bool $pk;
 
+    /** @param scalar|Stringable|null $defaultValue */
     public function __construct(
         private readonly string $name,
         public readonly ColumnType $type = ColumnType::TEXT,
-        public readonly mixed $defaultValue = null,
+        mixed $defaultValue = null,
     ) {
-        if ($this->defaultValue !== null && !\is_scalar($this->defaultValue)) {
-            throw new InvalidArgumentException('Default value must be a scalar value.');
+        if ($defaultValue instanceof Stringable) {
+            $defaultValue = (string) $defaultValue;
         }
+        if ($defaultValue !== null && !\is_scalar($defaultValue)) {
+            throw new InvalidArgumentException('Default value must be scalar');
+        }
+
+        $this->defaultValue = $defaultValue;
     }
 
     public function __debugInfo(): array
@@ -77,7 +84,6 @@ final class Column implements CreateColumnInterface, Stringable
     public static function createFromSchema(array $row): self
     {
         $defaultValueKey = 'dflt_value';
-
         if (!\array_key_exists($defaultValueKey, $row)) {
             throw new InvalidArgumentException(sprintf('mandatory key "%s" is missing', $defaultValueKey));
         }
@@ -94,9 +100,9 @@ final class Column implements CreateColumnInterface, Stringable
             $defaultValue,
         );
         $column->setColumnId($row['cid']);
-        $column->setPk((bool) $row['pk']);
+        $column->setPk($row['pk']);
 
-        if ($row['notnull'] === 1) {
+        if ($row['notnull']) {
             $column->disallowNull();
         }
 
@@ -108,7 +114,7 @@ final class Column implements CreateColumnInterface, Stringable
         return new self($name, ColumnType::INTEGER, $defaultValue);
     }
 
-    public static function createNumericColumn(string $name, ?string $defaultValue = self::DEFAULT_VALUE): self
+    public static function createNumericColumn(string $name, ?string $defaultValue = ''): self
     {
         return new self($name, ColumnType::NUMERIC, $defaultValue);
     }

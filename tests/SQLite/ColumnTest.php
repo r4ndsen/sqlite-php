@@ -6,6 +6,7 @@ namespace r4ndsen\SQLite;
 
 use BadFunctionCallException;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use stdClass;
@@ -13,6 +14,28 @@ use Stringable;
 
 final class ColumnTest extends TestCase
 {
+    #[Test]
+    public function it_should_allow_default_value_as_float(): void
+    {
+        $c = Column::createTextColumn('test', defaultValue: 1.2);
+
+        self::assertSame('1.2', $c->getDefaultValue());
+    }
+
+    #[Test]
+    public function it_should_allow_stringable_object(): void
+    {
+        $stringer = new class implements Stringable {
+            public function __toString()
+            {
+                return 'foo';
+            }
+        };
+
+        $c = new Column('bar', defaultValue: $stringer);
+
+        self::assertSame('foo', $c->getDefaultValue());
+    }
     #[Test]
     public function it_should_column_types(): void
     {
@@ -47,6 +70,21 @@ final class ColumnTest extends TestCase
 
         self::assertNull($c->getDefaultValue());
         self::assertSame(ColumnType::BLOB, $c->getType());
+    }
+
+    #[Test]
+    #[DataProvider('provideColumnDefaultValues')]
+    public function it_should_create_default_value_columns(
+        ColumnType $columnType,
+        mixed $createValue,
+        string $expectedValue,
+    ): void {
+        $c = new Column('foo', $columnType, $createValue);
+
+        $this->SQLite->getTable('test')->addCreateColumn($c)->create();
+        $columns = $this->SQLite->getTable('test')->schema();
+
+        self::assertSame($expectedValue, $columns['foo']->getDefaultValue());
     }
 
     #[Test]
@@ -192,6 +230,17 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
+    public function it_should_keep_default_value_on_integer_column(): void
+    {
+        $c = new Column('foo', defaultValue: 1.2);
+
+        $this->SQLite->getTable('test')->addCreateColumn($c)->create();
+        $columns = $this->SQLite->getTable('test')->schema();
+
+        self::assertSame('1.2', $columns['foo']->getDefaultValue());
+    }
+
+    #[Test]
     public function it_should_methods(): void
     {
         $c = Column::createDefaultColumn('test');
@@ -217,6 +266,21 @@ final class ColumnTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         new Column('test', defaultValue: new stdClass());
+    }
+
+    public static function provideColumnDefaultValues(): iterable
+    {
+        yield 'integer' => [
+            'columnType'    => ColumnType::INTEGER,
+            'createValue'   => 1.2,
+            'expectedValue' => '1.2',
+        ];
+        yield 'float' => [
+            'columnType'    => ColumnType::REAL,
+            'createValue'   => 1.2,
+            'expectedValue' => '1.2',
+        ];
+
     }
 }
 
