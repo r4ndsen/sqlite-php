@@ -124,12 +124,12 @@ class SQLite
     {
         $result = $this->getPragma()->integrityCheck();
 
-        if (DatabaseMalformedException::MESSAGE === $result) {
+        if ($result === DatabaseMalformedException::MESSAGE) {
             throw new DatabaseMalformedException($result);
         }
 
         if ($result !== Pragma::INTEGRITY_CHECK_OKAY) {
-            throw new SQLiteException($result);
+            throw new SQLiteException($result ?? 'integrity check failed');
         }
     }
 

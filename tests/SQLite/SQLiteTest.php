@@ -62,8 +62,8 @@ final class SQLiteTest extends TestCase
         $tables = $s->getAllTables();
         self::assertCount(2, $tables);
 
-        self::assertSame('foo', current($tables)->getName());
-        self::assertSame('bar', end($tables)->getName());
+        self::assertSame('foo', $tables[0]->getName());
+        self::assertSame('bar', $tables[1]->getName());
     }
 
     #[Test]

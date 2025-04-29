@@ -10,6 +10,7 @@ use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\BindValueException;
 use r4ndsen\SQLite\Exception\MissingParameterException;
 use r4ndsen\SQLite\Exception\QueryException;
+use stdClass;
 
 final class PreparedStatementTest extends TestCase
 {
@@ -33,7 +34,6 @@ final class PreparedStatementTest extends TestCase
 
         $stm = $this->SQLite->prepare($sql = 'insert into test (content) values (?)');
         self::assertSame($sql, $stm->getQueryString());
-        self::assertInstanceOf(PreparedStatement::class, $stm);
 
         $stm->bind(['from prepared']);
         $stm->bind(['from prepared2'], [SQLITE3_TEXT]);
@@ -298,6 +298,17 @@ final class PreparedStatementTest extends TestCase
 
         $stm = $this->SQLite->prepare($sql = 'insert into test (content) values (:content)');
         $stm->setCommitModulo(0);
+    }
+
+    #[Test]
+    public function it_should_throw_on_non_scalar_input(): void
+    {
+        $id = Column::createIntegerColumn('id');
+
+        $this->SQLite->test->addCreateColumn($id)->create();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->SQLite->test->push([new stdClass()]);
     }
 
     #[Test]

@@ -96,15 +96,18 @@ final class QueryTraitTest extends TestCase
         self::assertEquals([$object], $objects);
 
         $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class);
+        self::assertNotNull($object);
         self::assertInstanceOf(WithPrivateConstructor::class, $object);
         self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private', true)->getValue($object));
 
         $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class, ['public set']);
+        self::assertNotNull($object);
         self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private', true)->getValue($object));
         self::assertSame('public set', $this->getProperty($object, 'public', true)->getValue($object));
         self::assertSame(2, $this->getProperty($object, 'protected', true)->getValue($object));
 
         $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `public`, "protected" as protected', ['d' => 'now'], WithPrivateConstructor::class);
+        self::assertNotNull($object);
         self::assertSame(date('Y-m-d'), $this->getProperty($object, 'public', true)->getValue($object));
         self::assertSame('protected', $this->getProperty($object, 'protected', true)->getValue($object));
         self::assertSame(3, $this->getProperty($object, 'private', true)->getValue($object));

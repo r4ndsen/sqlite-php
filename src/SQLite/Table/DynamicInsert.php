@@ -6,6 +6,7 @@ namespace r4ndsen\SQLite\Table;
 
 use r4ndsen\SQLite\Column;
 use r4ndsen\SQLite\Exception\ColumnNameAmbiguousException;
+use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Table;
 
 /**
@@ -19,7 +20,7 @@ class DynamicInsert extends Table
     /**
      * preserves the original case a column appeared in.
      *
-     * @var array<string, string>
+     * @var array<string, string>|null
      */
     protected ?array $columnCaseMap = null;
 
@@ -44,6 +45,7 @@ class DynamicInsert extends Table
         }
     }
 
+    /** @throws SQLiteException */
     public function drop(): bool
     {
         try {
@@ -53,6 +55,7 @@ class DynamicInsert extends Table
         }
     }
 
+    /** @throws SQLiteException */
     public function push(array $data): static
     {
         if (!isset($this->columnCaseMap)) {
@@ -101,12 +104,15 @@ class DynamicInsert extends Table
         $pushData = $this->pushData;
 
         foreach ($rawData as $columnName => $value) {
-            $pushData[$this->getColumnCase((string) $columnName)] = $value;
+            // @phpstan-ignore offsetAccess.notFound
+            $columnName = $this->columnCaseMap[(string) $columnName];
+            $pushData[$columnName] = $value;
         }
 
         return $pushData;
     }
 
+    /** @return array<string, string> */
     protected function initializeColumnCaseMap(): array
     {
         $this->columnCaseMap = [];
@@ -117,6 +123,7 @@ class DynamicInsert extends Table
             $this->seenRealColumn($column->getRaw());
         }
 
+        // @phpstan-ignore return.type
         return $this->columnCaseMap;
     }
 
@@ -189,11 +196,6 @@ class DynamicInsert extends Table
         $this->columnCaseMap[$lowerColumnName] = $plainColumnName;
         $this->columnCaseMap[$plainColumnName] = $plainColumnName;
         $this->columnCaseMap[$trimColumnName] = $plainColumnName;
-    }
-
-    private function getColumnCase(string $columnName): string
-    {
-        return $this->columnCaseMap[$columnName];
     }
 
     private function lower(string $s): string

@@ -9,4 +9,9 @@ interface Constant
     public const LOCKING_MODE = 'locking_mode';
     public const SYNCHRONOUS = 'synchronous';
     public const TEMP_STORE = 'temp_store';
+    public const CACHE_SIZE = 'cache_size';
+    public const INTEGRITY_CHECK = 'integrity_check';
+    public const INTEGRITY_CHECK_OKAY = 'ok';
+    public const PAGE_SIZE = 'page_size';
+    public const QUICK_CHECK = 'quick_check';
 }

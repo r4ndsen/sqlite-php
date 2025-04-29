@@ -7,7 +7,6 @@ namespace r4ndsen\SQLite;
 use Exception;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\AttachedDatabaseException;
-use r4ndsen\SQLite\Exception\BindValueException;
 use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Traits\ExecTrait;
 use r4ndsen\SQLite\Traits\PragmaTrait;
@@ -77,12 +76,7 @@ class AttachmentHandler
         return $this->connections[$identifier] ?? throw new AttachedDatabaseException('No attached sqlite with identifier: ' . $identifier);
     }
 
-    /**
-     * returns whether a database with given identifier attached.
-     *
-     * @throws BindValueException
-     * @throws ReflectionException
-     */
+    /** returns whether a database with given identifier attached. */
     public function has(string $identifier): bool
     {
         foreach ($this->list() as $item) {
@@ -94,7 +88,6 @@ class AttachmentHandler
         return false;
     }
 
-    // Query for all attached databases.
     protected function list(): array
     {
         return $this->getPragma()->getDatabaseList();

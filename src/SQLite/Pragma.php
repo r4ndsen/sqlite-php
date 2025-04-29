@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use Generator;
+use InvalidArgumentException;
 use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Exception\TableDoesNotExistException;
 use r4ndsen\SQLite\Pragma\Constant;
@@ -14,15 +15,11 @@ use r4ndsen\SQLite\Pragma\LockingMode;
 use r4ndsen\SQLite\Pragma\Synchronous;
 use r4ndsen\SQLite\Pragma\TempStore;
 use r4ndsen\SQLite\Traits\QueryTrait;
+use TypeError;
 
-final class Pragma
+final class Pragma implements Constant
 {
     use QueryTrait;
-    public const CACHE_SIZE = 'cache_size';
-    public const INTEGRITY_CHECK = 'integrity_check';
-    public const INTEGRITY_CHECK_OKAY = 'ok';
-    public const PAGE_SIZE = 'page_size';
-    public const QUICK_CHECK = 'quick_check';
 
     public function __construct(protected Connection $conn)
     {
@@ -44,6 +41,10 @@ final class Pragma
         return $this->__get($key) !== null;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     * @throws TypeError
+     */
     public function __set(string $key, mixed $value): void
     {
         if (strtolower($key) === Constant::SYNCHRONOUS) {
@@ -68,7 +69,8 @@ final class Pragma
 
     public function getCacheSize(): int
     {
-        return (int) $this->__get(self::CACHE_SIZE);
+        // @phpstan-ignore cast.int
+        return (int) $this->__get(Constant::CACHE_SIZE);
     }
 
     /** returns a list of attached databases. */
@@ -100,7 +102,8 @@ final class Pragma
 
     public function getPageSize(): int
     {
-        return (int) $this->__get(self::PAGE_SIZE);
+        // @phpstan-ignore cast.int
+        return (int) $this->__get(Constant::PAGE_SIZE);
     }
 
     public function getSynchronous(): Synchronous
@@ -126,18 +129,20 @@ final class Pragma
     /** @see https://www.sqlite.org/pragma.html#pragma_integrity_check */
     public function integrityCheck(): ?string
     {
-        return $this->__get(self::INTEGRITY_CHECK);
+        // @phpstan-ignore return.type
+        return $this->__get(Constant::INTEGRITY_CHECK);
     }
 
     /** @see https://www.sqlite.org/pragma.html#pragma_quick_check */
     public function quickCheck(): ?string
     {
-        return $this->__get(self::QUICK_CHECK);
+        // @phpstan-ignore return.type
+        return $this->__get(Constant::QUICK_CHECK);
     }
 
     public function setCacheSize(int $size): self
     {
-        $this->__set(self::CACHE_SIZE, $size);
+        $this->__set(Constant::CACHE_SIZE, $size);
 
         return $this;
     }
@@ -170,10 +175,10 @@ final class Pragma
         // 1024 .. 65536
         $valid = [2 << 9, 2 << 10, 2 << 11, 2 << 12, 2 << 13, 2 << 14, 2 << 15];
         if (!\in_array($size, $valid, true)) {
-            throw new SQLiteException(self::PAGE_SIZE . ' must be in (' . implode(', ', $valid) . ')');
+            throw new SQLiteException(Constant::PAGE_SIZE . ' must be in (' . implode(', ', $valid) . ')');
         }
 
-        $this->__set(self::PAGE_SIZE, $size);
+        $this->__set(Constant::PAGE_SIZE, $size);
 
         return $this;
     }

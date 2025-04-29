@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\SQLiteException;
 use stdClass;
+use TypeError;
 
 final class PragmaTest extends TestCase
 {
@@ -265,5 +266,29 @@ final class PragmaTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid value for pragma.temp_store: foo');
         $this->SQLite->pragma->temp_store = 'foo';
+    }
+
+    #[Test]
+    public function it_should_throw_type_error(): void
+    {
+        $this->expectException(TypeError::class);
+
+        $this->SQLite->pragma->temp_store = 1.0;
+    }
+
+    #[Test]
+    public function it_should_throw_type_error2(): void
+    {
+        $this->expectException(TypeError::class);
+
+        $this->SQLite->pragma->__set('temp_store', new stdClass());
+    }
+
+    #[Test]
+    public function it_should_throw_type_error3(): void
+    {
+        $this->expectException(TypeError::class);
+
+        $this->SQLite->pragma->__set('temp_store', []);
     }
 }

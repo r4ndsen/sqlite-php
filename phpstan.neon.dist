@@ -1,7 +1,7 @@
 parameters:
 	tmpDir: build/phpstan.cache
 
-	level: 6
+	level: 9
 
 	paths:
 		- src
@@ -24,3 +24,6 @@ parameters:
 		-
 			path: tests/SQLite/Traits/QueryTraitTest.php
 			identifier: identical.alwaysTrue
+		-
+		    path: src/SQLite/Pragma.php
+		    identifier: argument.type

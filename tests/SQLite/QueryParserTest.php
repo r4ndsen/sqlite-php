@@ -88,7 +88,9 @@ SQL;
 
         $this->SQLite->data->getDynamicInsertTable()->push(['c:c' => 'baz']);
 
-        self::assertSame($expected, array_values($this->SQLite->fetchOne('select "foo", \'bar\', `c:c`, :d from data', ['d' => 'voo'])));
+        $res = $this->SQLite->fetchOne('select "foo", \'bar\', `c:c`, :d from data', ['d' => 'voo']);
+
+        self::assertSame($expected, array_values($res ?? []));
     }
 
     #[Test]

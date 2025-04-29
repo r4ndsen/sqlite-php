@@ -45,6 +45,7 @@ final class PreparedStatement
      * bind params from an indexed array to the sql statement.
      *
      * @throws BindValueException
+     * @throws InvalidArgumentException
      * @throws SQLiteException
      */
     public function bind(array $data, array $types = []): SQLite3Result
@@ -64,6 +65,7 @@ final class PreparedStatement
      * bind params from an associated array to the sql statement.
      *
      * @throws BindValueException
+     * @throws InvalidArgumentException
      * @throws SQLiteException
      */
     public function bindAssoc(array $data, array $types = []): SQLite3Result
@@ -141,6 +143,7 @@ final class PreparedStatement
     protected function executeStatement(): SQLite3Result
     {
         try {
+            // @phpstan-ignore return.type
             return $this->getStatement()->execute();
         } catch (SQLiteException $e) {
             throw $e;
@@ -155,15 +158,22 @@ final class PreparedStatement
         return $this->stm ??= $this->conn->prepare($this->sql);
     }
 
-    /** @throws BindValueException */
+    /**
+     * @throws BindValueException
+     * @throws InvalidArgumentException
+     */
     private function _bind(int|string $param, mixed $value, int $type): void
     {
         if (\is_string($value) || $value instanceof Stringable) {
             $value = str_replace("\0", '', (string) $value);
         }
 
+        if ($value !== null && !\is_scalar($value)) {
+            throw new InvalidArgumentException('Bind value must be scalar');
+        }
+
         if ($this->getStatement()->bindValue($param, $value, $type) === false) {
-            throw new BindValueException(sprintf("Could not bind value: %s to key: '%s' on: %s", $value === null ? 'NULL' : sprintf("'%s'", $value), $param, $this->sql));
+            throw new BindValueException(sprintf("Could not bind value: %s to key: '%s' on: %s", $value === null ? 'NULL' : sprintf("'%s'", (string) $value), $param, $this->sql));
         }
     }
 }

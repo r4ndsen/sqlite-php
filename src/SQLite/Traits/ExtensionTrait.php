@@ -8,8 +8,10 @@ trait ExtensionTrait
 {
     protected string $identifier;
 
+    /** @return callable-string|callable */
     public function getCallback(): callable
     {
+        // @phpstan-ignore return.type
         return $this->identifier;
     }
 

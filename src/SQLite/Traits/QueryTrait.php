@@ -64,7 +64,7 @@ trait QueryTrait
     /**
      * @param class-string<T> $class
      *
-     * @return T[]
+     * @return T[]|array<null>
      *
      * @throws ReflectionException
      * @throws SQLiteException
@@ -98,7 +98,7 @@ trait QueryTrait
      *
      * @param class-string<T> $class the class of the objects you want to receive
      *
-     * @return T[]
+     * @return T[]|array<null>
      *
      * @throws SQLiteException
      * @throws ReflectionException
@@ -154,11 +154,9 @@ trait QueryTrait
     /**
      * the value of the first row in the first column.
      *
-     * @return float|int|string|null
-     *
      * @throws SQLiteException
      */
-    public function fetchValue(string $sql, array $bind = [])
+    public function fetchValue(string $sql, array $bind = []): float|int|string|false|null
     {
         foreach ($this->yieldCol($sql, $bind) as $value) {
             return $value;
@@ -203,7 +201,7 @@ trait QueryTrait
     /**
      * yields each result as associative array.
      *
-     * @return Generator<array>
+     * @return Generator<array<float|int|string|null>>
      *
      * @throws SQLiteException
      */
@@ -216,6 +214,8 @@ trait QueryTrait
 
     /**
      * yields the values in the first column.
+     *
+     * @return Generator<float|int|string|false|null>
      *
      * @throws SQLiteException
      */
@@ -325,6 +325,8 @@ trait QueryTrait
     /**
      * yields all returned values without column names.
      *
+     * @return Generator<array<int, mixed>>
+     *
      * @throws SQLiteException
      */
     public function yieldPlain(string $sql, array $bind = []): Generator
@@ -334,7 +336,11 @@ trait QueryTrait
         yield from $this->fetchArray($result, SQLITE3_NUM);
     }
 
-    /** yields the result of an SQLite3Result object as an array per row */
+    /**
+     * yields the result of an SQLite3Result object as an array per row
+     *
+     * @return Generator<array<float|int|string|null>>
+     */
     private function fetchArray(SQLite3Result $result, int $mode = SQLITE3_ASSOC): Generator
     {
         while (($row = $result->fetchArray($mode)) !== false) {

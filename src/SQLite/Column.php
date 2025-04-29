@@ -30,6 +30,9 @@ final class Column implements CreateColumnInterface, Stringable
         public readonly ColumnType $type = ColumnType::TEXT,
         public readonly mixed $defaultValue = null,
     ) {
+        if ($this->defaultValue !== null && !\is_scalar($this->defaultValue)) {
+            throw new InvalidArgumentException('Default value must be a scalar value.');
+        }
     }
 
     public function __debugInfo(): array
@@ -143,7 +146,7 @@ final class Column implements CreateColumnInterface, Stringable
         );
     }
 
-    public function getDefaultValue(): ?string
+    public function getDefaultValue(): mixed
     {
         return $this->defaultValue;
     }

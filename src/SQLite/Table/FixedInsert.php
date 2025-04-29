@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite\Table;
 
 use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
+use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Table;
 
 class FixedInsert extends DynamicInsert
 {
     protected bool $withRowid = true;
 
-    /** @throws ColumnDoesNotExistException */
+    /**
+     * @throws SQLiteException
+     * @throws ColumnDoesNotExistException
+     */
     public function push(array $data): static
     {
         if (!isset($this->columnCaseMap)) {
@@ -31,6 +35,8 @@ class FixedInsert extends DynamicInsert
             }
         }
 
-        return Table::push($this->combineData($data));
+        Table::push($this->combineData($data));
+
+        return $this;
     }
 }

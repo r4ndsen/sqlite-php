@@ -8,6 +8,7 @@ use BadFunctionCallException;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
+use stdClass;
 use Stringable;
 
 final class ColumnTest extends TestCase
@@ -209,6 +210,13 @@ final class ColumnTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         Column::createFromSchema([]);
+    }
+
+    #[Test]
+    public function it_should_throw_on_non_scalar_input(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        new Column('test', defaultValue: new stdClass());
     }
 }
 

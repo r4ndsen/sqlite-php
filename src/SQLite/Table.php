@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
-use BadMethodCallException;
 use Countable;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -15,6 +14,7 @@ use r4ndsen\SQLite\Exception\DeleteColumnException;
 use r4ndsen\SQLite\Exception\FeatureNotSupportedException;
 use r4ndsen\SQLite\Exception\QueryException;
 use r4ndsen\SQLite\Exception\RenameColumnException;
+use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Exception\SyntaxErrorException;
 use r4ndsen\SQLite\Exception\TableAlreadyCreatedException;
 use r4ndsen\SQLite\Exception\TableDoesNotExistException;
@@ -33,7 +33,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     protected ColumnFactoryInterface $columnFactory;
 
     /**
-     * Contains a cached array of the current columns the table has.
+     * Contains the current columns the table has.
      *
      * @var Column[]
      */
@@ -71,10 +71,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return self::backtickIdentifier($this->name);
     }
 
-    /**
-     * @throws QueryException
-     * @throws TableDoesNotExistException
-     */
+    /** @throws SQLiteException */
     public function addColumn(Column $column): bool
     {
         if ($this->columnExists($column->getLower())) {
@@ -106,11 +103,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this;
     }
 
-    /**
-     * @throws BadMethodCallException
-     * @throws TableDoesNotExistException
-     * @throws QueryException
-     */
+    /** @throws SQLiteException */
     public function addIndex(Index $index): bool
     {
         return $this->exec(
@@ -126,11 +119,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return Column::ROWID === $name || isset($this->columns()[mb_strtolower(trim($name), 'UTF-8')]);
     }
 
-    /**
-     * @return Column[]
-     *
-     * @throws TableDoesNotExistException
-     */
+    /** @return Column[] */
     public function columns(): array
     {
         return $this->columns ?: $this->schema();
@@ -143,18 +132,21 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this;
     }
 
+    /** @return int<0, max> */
     public function count(): int
     {
         if (!$this->hasData()) {
             return 0;
         }
 
+        // @phpstan-ignore return.type
         return $this->querySingle('select count(*) from ' . $this);
     }
 
     /**
      * @throws CreateTableFailedException
      * @throws TableAlreadyCreatedException
+     * @throws SQLiteException
      */
     public function create(): bool
     {
@@ -177,7 +169,7 @@ class Table implements Countable, IteratorAggregate, Stringable
 
     /**
      * @throws TableAlreadyCreatedException
-     * @throws QueryException
+     * @throws SQLiteException
      */
     public function createFromArray(array $columnNames): bool
     {
@@ -197,7 +189,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this->create();
     }
 
-    /** @throws QueryException */
+    /** @throws SQLiteException */
     public function createIfNotExists(): bool
     {
         return $this->exec(
@@ -210,7 +202,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     }
 
     /**
-     * @throws TableDoesNotExistException
+     * @throws SQLiteException
      * @throws FeatureNotSupportedException
      * @throws DeleteColumnException
      */
@@ -233,6 +225,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         }
     }
 
+    /** @throws SQLiteException */
     public function drop(): bool
     {
         $this->columns = [];
@@ -287,7 +280,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return new FixedInsertTable($this->conn, $this->name);
     }
 
-    /** @throws TableDoesNotExistException */
+    /** @throws SQLiteException */
     public function getIterator(): Traversable
     {
         yield from $this->fetchAll('select * from ' . $this);
@@ -305,13 +298,16 @@ class Table implements Countable, IteratorAggregate, Stringable
 
     public function maxRow(): int
     {
+        $sql = sprintf('select max(%s) from %s', Column::ROWID, $this);
+
         try {
-            return (int) $this->querySingle('select max(`rowid`) from ' . $this);
+            return (int) $this->querySingle($sql);
         } catch (TableDoesNotExistException) {
             return 0;
         }
     }
 
+    /** @throws SQLiteException */
     public function push(array $data): static
     {
         if ($this->preparedStatement === null) {
@@ -339,7 +335,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this;
     }
 
-    /** @throws Exception\BindValueException */
+    /** @throws SQLiteException */
     public function pushWithoutKeys(array $data): static
     {
         if ($this->preparedStatement === null) {
@@ -362,7 +358,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     }
 
     /**
-     * @throws TableDoesNotExistException
+     * @throws SQLiteException
      * @throws RenameColumnException
      */
     public function renameColumn(Column $from, Column $to): bool
@@ -384,7 +380,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     }
 
     /**
-     * fetches the columns again (resets the cache).
+     * fetches the columns again (resets the cache)
      *
      * @return Column[]
      */
@@ -410,13 +406,13 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this;
     }
 
-    /** @throws TableDoesNotExistException */
+    /** @throws SQLiteException */
     public function toArray(): array
     {
         return iterator_to_array($this);
     }
 
-    /** @throws TableDoesNotExistException */
+    /** @throws SQLiteException */
     public function truncate(): bool
     {
         return $this->exec('delete from ' . $this);
@@ -433,6 +429,10 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     * @throws SQLiteException
+     */
     protected function buildCreateStatement(): string
     {
         if (!$this->createColumns) {
@@ -456,7 +456,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this->columnFactory ??= new ColumnFactory();
     }
 
-    /** @throws TableDoesNotExistException */
+    /** @throws SQLiteException */
     protected function hasRows(): bool
     {
         return (bool) $this->querySingle(
