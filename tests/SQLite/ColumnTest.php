@@ -5,11 +5,9 @@ declare(strict_types=0);
 namespace r4ndsen\SQLite;
 
 use BadFunctionCallException;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
-use stdClass;
 use Stringable;
 
 final class ColumnTest extends TestCase
@@ -17,6 +15,7 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_allow_default_value_as_float(): void
     {
+        // @phpstan-ignore  argument.type
         $c = Column::createTextColumn('test', defaultValue: 1.2);
 
         self::assertSame('1.2', $c->getDefaultValue());
@@ -79,6 +78,7 @@ final class ColumnTest extends TestCase
         mixed $createValue,
         string $expectedValue,
     ): void {
+        // @phpstan-ignore  argument.type
         $c = new Column('foo', $columnType, $createValue);
 
         $this->SQLite->getTable('test')->addCreateColumn($c)->create();
@@ -90,7 +90,7 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_create_float_column(): void
     {
-        $c = Column::createFloatColumn('float', null);
+        $c = Column::createFloatColumn('float');
 
         self::assertNull($c->getDefaultValue());
         self::assertSame(ColumnType::REAL, $c->getType());
@@ -232,6 +232,7 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_keep_default_value_on_integer_column(): void
     {
+        // @phpstan-ignore  argument.type
         $c = new Column('foo', defaultValue: 1.2);
 
         $this->SQLite->getTable('test')->addCreateColumn($c)->create();
@@ -241,31 +242,34 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
+    public function it_should_make_primary_key(): void
+    {
+        $c = Column::createIntegerColumn('foo', defaultValue: 0);
+
+        $primaryKey = new TableConstraint();
+        $primaryKey->addIndexedColumn($c);
+        $primaryKey->primaryKey();
+
+        $this->SQLite->getTable('test')
+            ->addCreateColumn($c)
+            ->addConstraint($primaryKey)
+            ->create();
+        $columns = $this->SQLite->getTable('test')->schema();
+
+        self::assertTrue($columns['foo']->getIsPrimaryKey());
+    }
+
+    #[Test]
     public function it_should_methods(): void
     {
         $c = Column::createDefaultColumn('test');
         self::assertSame(ColumnType::TEXT, $c->getType());
         self::assertSame('', $c->getDefaultValue());
         self::assertNull($c->getColumnId());
-        self::assertNull($c->getPk());
+        self::assertNull($c->getIsPrimaryKey());
         self::assertSame('`test`', (string) $c);
         self::assertSame('test', $c->getLower());
         self::assertSame('test', $c->getPlain());
-    }
-
-    #[Test]
-    public function it_should_throw_on_invalid_schema(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Column::createFromSchema([]);
-    }
-
-    #[Test]
-    public function it_should_throw_on_non_scalar_input(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        new Column('test', defaultValue: new stdClass());
     }
 
     public static function provideColumnDefaultValues(): iterable
@@ -280,7 +284,6 @@ final class ColumnTest extends TestCase
             'createValue'   => 1.2,
             'expectedValue' => '1.2',
         ];
-
     }
 }
 

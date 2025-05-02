@@ -5,7 +5,6 @@ declare(strict_types=0);
 namespace r4ndsen\SQLite;
 
 use BadMethodCallException;
-use InvalidArgumentException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 use Stringable;
 
@@ -16,30 +15,19 @@ final class Column implements CreateColumnInterface, Stringable
     public const NOT_NULL = 'NOT NULL';
     public const ROWID = 'rowid';
 
-    public readonly ?string $defaultValue;
-
     /** Column id, will be populated by the table the column is placed in */
     private int $columnId;
 
+    /** Primary key flag, will be populated by the table the column is placed in */
+    private bool $isPrimaryKey;
+
     private ?string $maybeNull = null;
 
-    /** Primary key flag, will be populated by the table the column is placed in */
-    private bool $pk;
-
-    /** @param scalar|Stringable|null $defaultValue */
     public function __construct(
         private readonly string $name,
         public readonly ColumnType $type = ColumnType::TEXT,
-        mixed $defaultValue = null,
+        public readonly ?string $defaultValue = null,
     ) {
-        if ($defaultValue instanceof Stringable) {
-            $defaultValue = (string) $defaultValue;
-        }
-        if ($defaultValue !== null && !\is_scalar($defaultValue)) {
-            throw new InvalidArgumentException('Default value must be scalar');
-        }
-
-        $this->defaultValue = $defaultValue;
     }
 
     public function __debugInfo(): array
@@ -50,7 +38,7 @@ final class Column implements CreateColumnInterface, Stringable
             'type'          => $this->type->name,
             'not null'      => (int) ($this->maybeNull !== null),
             'default value' => $this->defaultValue,
-            'primary key'   => (int) $this->getPk(),
+            'primary key'   => (int) $this->getIsPrimaryKey(),
         ];
     }
 
@@ -78,31 +66,21 @@ final class Column implements CreateColumnInterface, Stringable
 
     public static function createFloatColumn(string $name, ?float $defaultValue = null): self
     {
+        // @phpstan-ignore argument.type
         return new self($name, ColumnType::REAL, $defaultValue);
     }
 
-    public static function createFromSchema(array $row): self
+    public static function createFromSchema(ColumnSchema $schema): self
     {
-        $defaultValueKey = 'dflt_value';
-        if (!\array_key_exists($defaultValueKey, $row)) {
-            throw new InvalidArgumentException(sprintf('mandatory key "%s" is missing', $defaultValueKey));
-        }
-
-        if ($row[$defaultValueKey] === 'null') {
-            $defaultValue = null;
-        } else {
-            $defaultValue = preg_replace("#^'|'$#", '', (string) $row[$defaultValueKey]);
-        }
-
         $column = new self(
-            $row['name'],
-            ColumnType::fromString($row['type'] ?? ''),
-            $defaultValue,
+            $schema->name,
+            $schema->type,
+            $schema->defaultValue,
         );
-        $column->setColumnId($row['cid']);
-        $column->setPk($row['pk']);
+        $column->setColumnId($schema->columnId);
+        $column->setIsPrimaryKey($schema->isPrivateKey);
 
-        if ($row['notnull']) {
+        if ($schema->notNull) {
             $column->disallowNull();
         }
 
@@ -111,6 +89,7 @@ final class Column implements CreateColumnInterface, Stringable
 
     public static function createIntegerColumn(string $name, ?int $defaultValue = null): self
     {
+        // @phpstan-ignore argument.type
         return new self($name, ColumnType::INTEGER, $defaultValue);
     }
 
@@ -152,29 +131,29 @@ final class Column implements CreateColumnInterface, Stringable
         );
     }
 
-    public function getDefaultValue(): mixed
+    public function getDefaultValue(): ?string
     {
         return $this->defaultValue;
     }
 
     public function getEscaped(): string
     {
-        return self::backtickIdentifier($this->getRaw());
+        return self::backtickIdentifier($this->name);
+    }
+
+    public function getIsPrimaryKey(): ?bool
+    {
+        return $this->isPrimaryKey ?? null;
     }
 
     public function getLower(): string
     {
-        return mb_strtolower($this->getRaw(), 'UTF-8');
+        return mb_strtolower($this->name, 'UTF-8');
     }
 
     public function getLowerTrimmedEscaped(): string
     {
         return mb_strtolower($this->getTrimmedEscaped(), 'UTF-8');
-    }
-
-    public function getPk(): ?bool
-    {
-        return $this->pk ?? null;
     }
 
     public function getPlain(): string
@@ -189,7 +168,7 @@ final class Column implements CreateColumnInterface, Stringable
 
     public function getTrimmed(): string
     {
-        return trim($this->getRaw());
+        return trim($this->name);
     }
 
     public function getTrimmedEscaped(): string
@@ -214,9 +193,9 @@ final class Column implements CreateColumnInterface, Stringable
         return $this;
     }
 
-    private function setPk(bool $pk): self
+    private function setIsPrimaryKey(bool $isPrimaryKey): self
     {
-        $this->pk = $pk;
+        $this->isPrimaryKey = $isPrimaryKey;
 
         return $this;
     }

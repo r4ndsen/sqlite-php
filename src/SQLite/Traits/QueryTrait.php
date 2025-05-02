@@ -64,7 +64,7 @@ trait QueryTrait
     /**
      * @param class-string<T> $class
      *
-     * @return T[]|array<null>
+     * @return array<T|null>
      *
      * @throws ReflectionException
      * @throws SQLiteException
@@ -98,7 +98,7 @@ trait QueryTrait
      *
      * @param class-string<T> $class the class of the objects you want to receive
      *
-     * @return T[]|array<null>
+     * @return array<T|null>
      *
      * @throws SQLiteException
      * @throws ReflectionException

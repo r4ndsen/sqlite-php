@@ -119,7 +119,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return Column::ROWID === $name || isset($this->columns()[mb_strtolower(trim($name), 'UTF-8')]);
     }
 
-    /** @return Column[] */
+    /** @return  array<string, Column> */
     public function columns(): array
     {
         return $this->columns ?: $this->schema();
@@ -382,7 +382,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     /**
      * fetches the columns again (resets the cache)
      *
-     * @return Column[]
+     * @return array<string, Column>
      */
     public function schema(): array
     {
@@ -391,8 +391,8 @@ class Table implements Countable, IteratorAggregate, Stringable
         }
 
         $this->columns = [];
-        foreach ($this->getPragma()->tableInfo($this->name) as $row) {
-            $column = Column::createFromSchema($row);
+        foreach ($this->getPragma()->getTableColumnSchemas($this->name) as $columnSchema) {
+            $column = Column::createFromSchema($columnSchema);
             $this->columns[$column->getLower()] = $column;
         }
 

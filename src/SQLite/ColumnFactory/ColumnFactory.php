@@ -9,7 +9,7 @@ use r4ndsen\SQLite\ColumnType;
 
 readonly class ColumnFactory implements ColumnFactoryInterface
 {
-    public function __construct(public mixed $defaultValue = '')
+    public function __construct(public ?string $defaultValue = '')
     {
     }
 

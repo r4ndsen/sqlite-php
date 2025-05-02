@@ -9,7 +9,7 @@ use r4ndsen\SQLite\Table;
 
 class DefaultTableFactory implements TableFactoryInterface
 {
-    /** @var Table[] */
+    /** @var array<string, Table> */
     protected array $tables = [];
 
     public function __construct(protected Connection $conn)

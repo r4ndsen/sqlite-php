@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
-use Generator;
 use InvalidArgumentException;
 use r4ndsen\SQLite\Exception\SQLiteException;
-use r4ndsen\SQLite\Exception\TableDoesNotExistException;
 use r4ndsen\SQLite\Pragma\Constant;
 use r4ndsen\SQLite\Pragma\Encoding;
 use r4ndsen\SQLite\Pragma\JournalMode;
@@ -113,6 +111,16 @@ final class Pragma implements Constant
         );
     }
 
+    /** @return ColumnSchema[] */
+    public function getTableColumnSchemas(string $table): array
+    {
+        // @phpstan-ignore return.type
+        return $this->fetchInstances(
+            sql: sprintf('pragma table_info(%s)', self::backtickIdentifier($table)),
+            class: ColumnSchema::class
+        );
+    }
+
     /** @return string[] */
     public function getTableNames(): array
     {
@@ -191,16 +199,6 @@ final class Pragma implements Constant
     public function setTempStore(TempStore $mode): self
     {
         return $this->set(Constant::TEMP_STORE, $mode->name);
-    }
-
-    /**
-     * @return Generator<array>
-     *
-     * @throws TableDoesNotExistException
-     */
-    public function tableInfo(string $table): iterable
-    {
-        yield from $this->fetchAll(sprintf('pragma table_info(%s)', self::backtickIdentifier($table)));
     }
 
     private function set(string $key, string|int $value): self

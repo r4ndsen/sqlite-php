@@ -232,7 +232,7 @@ final class TableTest extends TestCase
         self::assertInstanceOf(Column::class, $c);
 
         self::assertSame(0, $c->getColumnId());
-        self::assertFalse($c->getPk());
+        self::assertFalse($c->getIsPrimaryKey());
 
         self::assertSame($c, $t->getColumnByColumnId(0));
         self::assertSame($c, $t->getColumnByName('test'));
