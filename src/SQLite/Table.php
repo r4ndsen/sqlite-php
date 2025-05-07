@@ -391,7 +391,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         }
 
         $this->columns = [];
-        foreach ($this->getPragma()->getTableColumnSchemas($this->name) as $columnSchema) {
+        foreach ($this->getPragma()->getTableColumnSchemas($this) as $columnSchema) {
             $column = Column::createFromSchema($columnSchema);
             $this->columns[$column->getLower()] = $column;
         }

@@ -12,5 +12,5 @@ abstract class AbstractExtension
     {
     }
 
-    abstract public function registerDefaults(): self;
+    abstract public function registerDefaults(): void;
 }

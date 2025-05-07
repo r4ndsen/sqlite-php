@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=0);
+declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
@@ -21,7 +21,6 @@ final readonly class ColumnSchema
         int $primaryKey,
     ) {
         $this->type = ColumnType::fromString($type);
-        $this->isPrivateKey = $primaryKey === 1;
         $this->notNull = $notNull === 1;
 
         if ($defaultValue === 'null' || $defaultValue === null) {
@@ -29,5 +28,7 @@ final readonly class ColumnSchema
         } else {
             $this->defaultValue = preg_replace("#^'|'$#", '', $defaultValue);
         }
+
+        $this->isPrivateKey = $primaryKey === 1;
     }
 }

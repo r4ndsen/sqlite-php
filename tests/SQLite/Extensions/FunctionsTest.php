@@ -12,6 +12,12 @@ use SQLite3;
 final class FunctionsTest extends TestCase
 {
     #[Test]
+    public function it_should_fail_with_exception_when_given_invalid_function(): void
+    {
+        self::assertFalse($this->SQLite->getConnection()->createFunction('', fn () => null));
+    }
+
+    #[Test]
     public function it_should_function_does_not_exist(): void
     {
         $this->expectException(FunctionDoesNotExistException::class);
@@ -99,5 +105,11 @@ final class FunctionsTest extends TestCase
     {
         self::assertSame('value', $this->SQLite->querySingle('select preg_replace("#", "a", "value")')); // invalid regex
         self::assertSame('aaaaa', $this->SQLite->querySingle('select preg_replace("#.#", "a", "value")'));
+    }
+
+    #[Test]
+    public function it_should_use_sprintf_callback_function(): void
+    {
+        self::assertSame('foo 1.23 bar', $this->SQLite->querySingle('select sprintf("%s %.2f %s", "foo", 1.234567, "bar")'));
     }
 }

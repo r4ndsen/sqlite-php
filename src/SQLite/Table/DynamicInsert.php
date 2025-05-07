@@ -77,7 +77,7 @@ class DynamicInsert extends Table
                     // re-initialize the prepared statement
                     $this->preparedStatement = null;
                 }
-            } elseif ($this->withRowid === false && Column::ROWID === $columnName) {
+            } elseif ($this->withRowid === false && $columnName === Column::ROWID) {
                 $this->withRowid = true;
                 $this->preparedStatement = null;
             }
@@ -128,7 +128,7 @@ class DynamicInsert extends Table
     }
 
     /** Prepares the pushData array with their default values in order */
-    protected function initializePushData(): array
+    protected function initializePushData(): void
     {
         $this->pushData = [];
 
@@ -139,8 +139,6 @@ class DynamicInsert extends Table
         foreach ($this->columns() as $column) {
             $this->pushData[$column->getRaw()] = $column->getDefaultValue();
         }
-
-        return $this->pushData;
     }
 
     protected function isKnownColumn(string $columnName): bool

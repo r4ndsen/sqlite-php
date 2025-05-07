@@ -112,11 +112,11 @@ final class Pragma implements Constant
     }
 
     /** @return ColumnSchema[] */
-    public function getTableColumnSchemas(string $table): array
+    public function getTableColumnSchemas(Table $table): array
     {
         // @phpstan-ignore return.type
         return $this->fetchInstances(
-            sql: sprintf('pragma table_info(%s)', self::backtickIdentifier($table)),
+            sql: sprintf('pragma table_info(%s)', $table),
             class: ColumnSchema::class
         );
     }

@@ -359,9 +359,10 @@ trait QueryTrait
     private function perform(string $sql, array $bind = []): SQLite3Result
     {
         $parser = new QueryParser($sql, $bind);
-        $sql = $parser->getStatement();
-        $bind = $parser->getValues();
 
-        return $this->prepare($sql)->bindAssoc($bind);
+        return $this
+            ->prepare($parser->getStatement())
+            ->bindAssoc($parser->getValues())
+        ;
     }
 }

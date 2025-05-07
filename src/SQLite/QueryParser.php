@@ -15,63 +15,36 @@ final class QueryParser
     private array $count = [
         '__' => null,
     ];
-
-    // The final query statement.
     private string $finalStatement;
-
-    // Final placeholders and values to bind
     private array $finalValues = [];
-
-    // The current numbered-placeholder in the original statement
     private int $num = 0;
     private string $statementSplitRegex;
 
-    // Rebuilds a statement with placeholders and bound values
     public function __construct(
-        // The initial query statement
         private readonly string $statement,
-        // The initial values to be bound
         private array $values = [],
     ) {
+        $this->rebuild();
     }
 
-    /** @throws MissingParameterException */
     public function getStatement(): string
     {
-        return $this->finalStatement ??= $this->rebuild()[0];
+        return $this->finalStatement;
     }
 
-    /** @throws MissingParameterException */
     public function getValues(): array
     {
-        return $this->finalValues ??= $this->rebuild()[1];
+        return $this->finalValues;
     }
 
-    public function rebuild(): array
-    {
-        // match standard PDO execute() behavior of zero-indexed arrays
-        if (\array_key_exists(0, $this->values)) {
-            array_unshift($this->values, null);
-        }
-
-        $this->finalStatement = $this->rebuildStatement($this->statement);
-
-        return [$this->finalStatement, $this->finalValues];
-    }
-
-    /**
-     * Given a named placeholder for an array, expand it for the array values,
-     * and bind those values to the expanded names.
-     */
     private function expandNamedPlaceholder(string $prefix, array $values): string
     {
         $i = 0;
         $expanded = [];
         foreach ($values as $value) {
-            $name = $prefix . '_' . $i;
+            $name = sprintf('%s_%u', $prefix, $i++);
             $expanded[] = ':' . $name;
             $this->finalValues[$name] = $value;
-            ++$i;
         }
 
         return implode(', ', $expanded);
@@ -179,6 +152,16 @@ final class QueryParser
         return $str;
     }
 
+    private function rebuild(): void
+    {
+        // match standard PDO execute() behavior of zero-indexed arrays
+        if (\array_key_exists(0, $this->values)) {
+            array_unshift($this->values, null);
+        }
+
+        $this->finalStatement = $this->rebuildStatement($this->statement);
+    }
+
     // Rebuilds a single statement part
     private function rebuildPart(string $part): string
     {
@@ -194,11 +177,9 @@ final class QueryParser
             PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
         );
 
-        // check sub-parts to expand placeholders for bound arrays
         return $this->prepareValuePlaceholders($subs);
     }
 
-    // Given an array of statement parts, rebuilds each part
     private function rebuildParts(array $parts): string
     {
         $statement = '';
@@ -209,7 +190,6 @@ final class QueryParser
         return $statement;
     }
 
-    // Given a statement, rebuilds it with array values embedded
     private function rebuildStatement(string $statement): string
     {
         $parts = $this->getParts($statement);

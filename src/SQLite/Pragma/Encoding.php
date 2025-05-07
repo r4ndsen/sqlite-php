@@ -17,12 +17,9 @@ enum Encoding: string
     {
         $input = strtolower($input);
 
-        foreach (self::cases() as $case) {
-            if (strtolower($case->name) === $input || strtolower($case->value) === $input) {
-                return $case;
-            }
-        }
-
-        throw new InvalidArgumentException('Invalid value for pragma.' . Constant::ENCODING . ': ' . $input);
+        return array_find(
+            self::cases(),
+            static fn (self $case) => strtolower($case->name) === $input || strtolower($case->value) === $input
+        ) ?? throw new InvalidArgumentException('Invalid value for pragma.' . Constant::ENCODING . ': ' . $input);
     }
 }

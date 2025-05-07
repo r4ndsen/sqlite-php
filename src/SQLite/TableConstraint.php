@@ -7,7 +7,7 @@ namespace r4ndsen\SQLite;
 use InvalidArgumentException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 
-class TableConstraint implements CreateColumnInterface
+final class TableConstraint implements CreateColumnInterface
 {
     use EscapeTrait;
 
@@ -52,7 +52,7 @@ class TableConstraint implements CreateColumnInterface
 
     public function primaryKey(): self
     {
-        $this->key = static::PRIMARY_KEY;
+        $this->key = self::PRIMARY_KEY;
 
         return $this;
     }
@@ -66,7 +66,7 @@ class TableConstraint implements CreateColumnInterface
 
     public function uniqueKey(): self
     {
-        $this->key = static::UNIQUE;
+        $this->key = self::UNIQUE;
 
         return $this;
     }

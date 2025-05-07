@@ -67,10 +67,10 @@ jobs:
       - name: Run test suite with text coverage
         run: vendor/bin/phpunit  --coverage-text --coverage-clover build/logs/clover.xml
 
-      - name: Upload coverage results to Coveralls
-        if: matrix.experimental == false
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          composer require php-coveralls/php-coveralls --dev --no-interaction --with-all-dependencies
-          vendor/bin/php-coveralls --coverage_clover=build/logs/clover.xml --verbose
+      #- name: Upload coverage results to Coveralls
+      #  if: matrix.experimental == false
+      #  env:
+      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  run: |
+      #    composer require php-coveralls/php-coveralls --dev --no-interaction --with-all-dependencies
+      #    vendor/bin/php-coveralls --coverage_clover=build/logs/clover.xml --verbose

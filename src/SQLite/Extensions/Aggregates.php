@@ -4,28 +4,30 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite\Extensions;
 
+use r4ndsen\SQLite\Exception\InvalidAggregateException;
 use r4ndsen\SQLite\Extensions\Aggregates\AggregateInterface;
 
 class Aggregates extends AbstractExtension
 {
-    public function add(AggregateInterface $aggregate): self
+    /** @throws InvalidAggregateException */
+    public function add(AggregateInterface $aggregate): void
     {
-        $this->conn->createAggregate(
+        $res = $this->conn->createAggregate(
             $aggregate->getIdentifier(),
             $aggregate->getCallback(),
             $aggregate->getFinalCallback()
         );
 
-        return $this;
+        if ($res === false) {
+            throw new InvalidAggregateException('Failed to create aggregate: ' . $aggregate->getIdentifier());
+        }
     }
 
-    public function registerDefaults(): self
+    public function registerDefaults(): void
     {
         $this->add(new Aggregates\GroupConcat());
         $this->add(new Aggregates\GroupConcatUnique());
         $this->add(new Aggregates\First());
         $this->add(new Aggregates\Last());
-
-        return $this;
     }
 }

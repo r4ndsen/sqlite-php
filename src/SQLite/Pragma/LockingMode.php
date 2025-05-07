@@ -13,12 +13,9 @@ enum LockingMode
     /** @throws InvalidArgumentException */
     public static function fromString(string $input): self
     {
-        foreach (self::cases() as $case) {
-            if ($case->name === strtoupper($input)) {
-                return $case;
-            }
-        }
-
-        throw new InvalidArgumentException('Invalid value for pragma.' . Constant::LOCKING_MODE . ': ' . $input);
+        return array_find(
+            self::cases(),
+            static fn (self $case) => $case->name === strtoupper($input)
+        ) ?? throw new InvalidArgumentException('Invalid value for pragma.' . Constant::LOCKING_MODE . ': ' . $input);
     }
 }

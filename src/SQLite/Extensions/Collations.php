@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite\Extensions;
 
+use r4ndsen\SQLite\Exception\InvalidCollationException;
 use r4ndsen\SQLite\Extensions\Collations\CollationInterface;
 
 class Collations extends AbstractExtension
 {
-    public function add(CollationInterface $collation): self
+    /** @throws InvalidCollationException */
+    public function add(CollationInterface $collation): void
     {
-        $this->conn->createCollation(
+        $res = $this->conn->createCollation(
             $collation->getIdentifier(),
             $collation->getCallback()
         );
 
-        return $this;
+        if ($res === false) {
+            throw new InvalidCollationException('Failed to create collation: ' . $collation->getIdentifier());
+        }
     }
 
-    public function registerDefaults(): self
+    public function registerDefaults(): void
     {
         $this->add(new Collations\NaturalCompare());
         $this->add(new Collations\NumericalCompare());
-
-        return $this;
     }
 }

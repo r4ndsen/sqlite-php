@@ -199,6 +199,8 @@ SQL;
 
     public function rebuild(string $sql, array $parameters): array
     {
-        return (new QueryParser($sql, $parameters))->rebuild();
+        $qp = new QueryParser($sql, $parameters);
+
+        return [$qp->getStatement(), $qp->getValues()];
     }
 }

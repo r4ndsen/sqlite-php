@@ -16,21 +16,15 @@ enum Synchronous: int
     public static function fromString(string|int $input): self
     {
         if (is_numeric($input)) {
-            foreach (self::cases() as $case) {
-                if ($case->value === (int) $input) {
-                    return $case;
-                }
-            }
-
-            throw new InvalidArgumentException('Invalid value for pragma.' . Constant::SYNCHRONOUS . ': ' . $input);
+            return array_find(
+                self::cases(),
+                static fn (self $case) => $case->value === (int) $input
+            ) ?? throw new InvalidArgumentException('Invalid value for pragma.' . Constant::SYNCHRONOUS . ': ' . $input);
         }
 
-        foreach (self::cases() as $case) {
-            if ($case->name === strtoupper($input)) {
-                return $case;
-            }
-        }
-
-        throw new InvalidArgumentException('Invalid value for pragma.' . Constant::SYNCHRONOUS . ': ' . $input);
+        return array_find(
+            self::cases(),
+            static fn (self $case) => $case->name === strtoupper($input)
+        ) ?? throw new InvalidArgumentException('Invalid value for pragma.' . Constant::SYNCHRONOUS . ': ' . $input);
     }
 }
