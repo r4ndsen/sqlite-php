@@ -27,16 +27,16 @@ stan:
 	vendor/bin/phpstan analyze --memory-limit 2G
 
 test82:
-	docker-compose up -d && docker-compose exec php-8.2 php /app/vendor/bin/phpunit
+	docker-compose up -d php-8.2 && docker-compose exec php-8.2 php /app/vendor/bin/phpunit
 
 test83:
-	docker-compose up -d && docker-compose exec php-8.3 php /app/vendor/bin/phpunit
+	docker-compose up -d php-8.3 && docker-compose exec php-8.3 php /app/vendor/bin/phpunit
 
 test84:
-	docker-compose up -d && docker-compose exec php-8.4 php /app/vendor/bin/phpunit
+	docker-compose up -d php-8.4 && docker-compose exec php-8.4 php /app/vendor/bin/phpunit
 
 test85:
-	docker-compose up -d && docker-compose exec php-8.5 php /app/vendor/bin/phpunit
+	docker-compose up -d php-8.5 && docker-compose exec php-8.5 php /app/vendor/bin/phpunit
 
 tests: test82 test83 test84 test85
 
