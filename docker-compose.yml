@@ -34,3 +34,15 @@ services:
                apt-get clean &&
                rm -rf /var/lib/apt/lists/* &&
                tail -f /dev/null"
+
+  php-8.5:
+    image: oanhnn/php:8.5-rc-cli
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      bash -c "apt-get update &&
+               apt-get install -y libsqlite3-dev &&
+               apt-get clean &&
+               rm -rf /var/lib/apt/lists/* &&
+               tail -f /dev/null"

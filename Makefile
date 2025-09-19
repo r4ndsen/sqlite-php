@@ -35,6 +35,9 @@ test83:
 test84:
 	docker-compose up -d && docker-compose exec php-8.4 php /app/vendor/bin/phpunit
 
+test85:
+	docker-compose up -d && docker-compose exec php-8.5 php /app/vendor/bin/phpunit
+
 tests: test82 test83 test84
 
 rector:
