@@ -95,4 +95,31 @@ final class AggregatesTest extends TestCase
         self::assertSame([4 => '1', 3 => '2'], $this->SQLite->fetchPairs('select last(rowid), id  from `test` group by id order by id asc'));
         self::assertSame([3 => '2', 4 => '1'], $this->SQLite->fetchPairs('select last(rowid), id  from `test` group by id order by id desc'));
     }
+
+    #[Test]
+    public function it_should_throw_invalid_aggregate_when_registration_fails(): void
+    {
+        $connection = new \r4ndsen\SQLite();
+        $aggregates = new Aggregates($connection->getConnection());
+
+        $failingAggregate = new class implements Aggregates\AggregateInterface {
+            public function getCallback(): callable
+            {
+                return static fn () => null;
+            }
+
+            public function getFinalCallback(): callable
+            {
+                return static fn () => null;
+            }
+
+            public function getIdentifier(): string
+            {
+                return '';
+            }
+        };
+
+        $this->expectException(\r4ndsen\SQLite\Exception\InvalidAggregateException::class);
+        $aggregates->add($failingAggregate);
+    }
 }

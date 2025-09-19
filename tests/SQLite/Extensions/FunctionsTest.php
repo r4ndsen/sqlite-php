@@ -108,6 +108,28 @@ final class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_should_throw_invalid_function_when_registration_fails(): void
+    {
+        $connection = new \r4ndsen\SQLite();
+        $functions = new Functions($connection->getConnection());
+
+        $failingFunction = new class implements Functions\FunctionInterface {
+            public function getCallback(): callable
+            {
+                return static fn () => null;
+            }
+
+            public function getIdentifier(): string
+            {
+                return '';
+            }
+        };
+
+        $this->expectException(\r4ndsen\SQLite\Exception\InvalidFunctionException::class);
+        $functions->add($failingFunction);
+    }
+
+    #[Test]
     public function it_should_use_sprintf_callback_function(): void
     {
         self::assertSame('foo 1.23 bar', $this->SQLite->querySingle('select sprintf("%s %.2f %s", "foo", 1.234567, "bar")'));

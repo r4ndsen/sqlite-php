@@ -211,4 +211,26 @@ final class CollationsTest extends TestCase
             $this->SQLite->fetchCol('select id from data2 order by id COLLATE NATURAL_CMP')
         );
     }
+
+    #[Test]
+    public function it_should_throw_invalid_collation_when_registration_fails(): void
+    {
+        $connection = new \r4ndsen\SQLite();
+        $collations = new Collations($connection->getConnection());
+
+        $failingCollation = new class implements Collations\CollationInterface {
+            public function getCallback(): callable
+            {
+                return static fn () => 0;
+            }
+
+            public function getIdentifier(): string
+            {
+                return '';
+            }
+        };
+
+        $this->expectException(\r4ndsen\SQLite\Exception\InvalidCollationException::class);
+        $collations->add($failingCollation);
+    }
 }

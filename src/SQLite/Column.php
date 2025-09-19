@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use BadMethodCallException;
-use InvalidArgumentException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 use Stringable;
 
@@ -207,12 +206,7 @@ final class Column implements CreateColumnInterface, Stringable
             return $defaultValue;
         }
 
-        // @phpstan-ignore function.alreadyNarrowedType
-        if (\is_int($defaultValue) || \is_float($defaultValue) || \is_bool($defaultValue)) {
-            return (string) $defaultValue;
-        }
-
-        throw new InvalidArgumentException('Unsupported default value type');
+        return (string) $defaultValue;
     }
 
     private function setColumnId(int $id): self
