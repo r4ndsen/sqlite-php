@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
-use r4ndsen\SQLite\Exception\QueryException;
 use r4ndsen\SQLite\Traits\ExecTrait;
 
 final class Transaction
@@ -25,10 +24,7 @@ final class Transaction
     public function begin(): self
     {
         if ($this->active === false) {
-            try {
-                $this->exec('begin');
-            } catch (QueryException) {
-            }
+            $this->exec('begin');
             $this->active = true;
         }
 
@@ -38,10 +34,7 @@ final class Transaction
     public function commit(): self
     {
         if ($this->active === true) {
-            try {
-                $this->exec('commit');
-            } catch (QueryException) {
-            }
+            $this->exec('commit');
             $this->active = false;
         }
 

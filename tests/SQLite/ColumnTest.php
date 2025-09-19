@@ -15,7 +15,7 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_allow_default_value_as_float(): void
     {
-        // @phpstan-ignore  argument.type
+        // @phpstan-ignore argument.type
         $c = Column::createTextColumn('test', defaultValue: 1.2);
 
         self::assertSame('1.2', $c->getDefaultValue());

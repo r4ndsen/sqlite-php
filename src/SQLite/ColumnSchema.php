@@ -29,6 +29,6 @@ final readonly class ColumnSchema
             $this->defaultValue = preg_replace("#^'|'$#", '', $defaultValue);
         }
 
-        $this->isPrivateKey = $primaryKey === 1;
+        $this->isPrivateKey = $primaryKey > 0;
     }
 }

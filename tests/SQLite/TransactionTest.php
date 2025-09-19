@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use PHPUnit\Framework\Attributes\Test;
+use r4ndsen\SQLite\Exception\QueryException;
 
 final class TransactionTest extends TestCase
 {
@@ -20,13 +21,17 @@ final class TransactionTest extends TestCase
         $t->begin();
         self::assertTrue($this->getPropertyValue($t, 'active'));
 
-        $t2->begin(); // runs into exception
-        self::assertTrue($this->getPropertyValue($t2, 'active'));
+        try {
+            $t2->begin();
+            self::fail('Expected QueryException when starting a second transaction');
+        } catch (QueryException) {
+            self::assertFalse($this->getPropertyValue($t2, 'active'));
+        }
 
         $t->commit();
         self::assertFalse($this->getPropertyValue($t, 'active'));
 
-        $t2->commit(); // runs into exception
+        $t2->commit();
         self::assertFalse($this->getPropertyValue($t2, 'active'));
     }
 

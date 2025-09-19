@@ -1,10 +1,11 @@
 <?php
 
-declare(strict_types=0);
+declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
 use BadMethodCallException;
+use InvalidArgumentException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 use Stringable;
 
@@ -18,6 +19,8 @@ final class Column implements CreateColumnInterface, Stringable
     /** Column id, will be populated by the table the column is placed in */
     private int $columnId;
 
+    private ?string $defaultValue;
+
     /** Primary key flag, will be populated by the table the column is placed in */
     private bool $isPrimaryKey;
 
@@ -26,8 +29,9 @@ final class Column implements CreateColumnInterface, Stringable
     public function __construct(
         private readonly string $name,
         public readonly ColumnType $type = ColumnType::TEXT,
-        public readonly ?string $defaultValue = null,
+        string|Stringable|int|float|bool|null $defaultValue = null,
     ) {
+        $this->defaultValue = self::normalizeDefaultValue($defaultValue);
     }
 
     public function __debugInfo(): array
@@ -54,7 +58,7 @@ final class Column implements CreateColumnInterface, Stringable
         return $this;
     }
 
-    public static function createBlobColumn(string $name, ?string $defaultValue = null): self
+    public static function createBlobColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = null): self
     {
         return new self($name, ColumnType::BLOB, $defaultValue);
     }
@@ -64,9 +68,8 @@ final class Column implements CreateColumnInterface, Stringable
         return self::createTextColumn($name);
     }
 
-    public static function createFloatColumn(string $name, ?float $defaultValue = null): self
+    public static function createFloatColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = null): self
     {
-        // @phpstan-ignore argument.type
         return new self($name, ColumnType::REAL, $defaultValue);
     }
 
@@ -87,18 +90,17 @@ final class Column implements CreateColumnInterface, Stringable
         return $column;
     }
 
-    public static function createIntegerColumn(string $name, ?int $defaultValue = null): self
+    public static function createIntegerColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = null): self
     {
-        // @phpstan-ignore argument.type
         return new self($name, ColumnType::INTEGER, $defaultValue);
     }
 
-    public static function createNumericColumn(string $name, ?string $defaultValue = ''): self
+    public static function createNumericColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = ''): self
     {
         return new self($name, ColumnType::NUMERIC, $defaultValue);
     }
 
-    public static function createTextColumn(string $name, ?string $defaultValue = ''): self
+    public static function createTextColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = ''): self
     {
         return new self($name, ColumnType::TEXT, $defaultValue);
     }
@@ -120,12 +122,17 @@ final class Column implements CreateColumnInterface, Stringable
 
     public function getCreateStatement(): string
     {
+        $defaultSql = 'null';
+        if ($this->defaultValue !== null) {
+            $defaultSql = sprintf("'%s'", self::escapeString($this->defaultValue));
+        }
+
         return rtrim(
             sprintf(
                 '%s %s default %s %s',
                 $this->getTrimmedEscaped(),
                 $this->type->name,
-                $this->defaultValue === null ? 'null' : sprintf("'%s'", $this->defaultValue),
+                $defaultSql,
                 $this->maybeNull
             )
         );
@@ -184,6 +191,27 @@ final class Column implements CreateColumnInterface, Stringable
     public function getType(): ColumnType
     {
         return $this->type;
+    }
+
+    private static function normalizeDefaultValue(string|Stringable|int|float|bool|null $defaultValue): ?string
+    {
+        if ($defaultValue === null) {
+            return null;
+        }
+
+        if ($defaultValue instanceof Stringable) {
+            return (string) $defaultValue;
+        }
+
+        if (\is_string($defaultValue)) {
+            return $defaultValue;
+        }
+
+        if (\is_int($defaultValue) || \is_float($defaultValue) || \is_bool($defaultValue)) {
+            return (string) $defaultValue;
+        }
+
+        throw new InvalidArgumentException('Unsupported default value type');
     }
 
     private function setColumnId(int $id): self

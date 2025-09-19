@@ -14,10 +14,23 @@ use stdClass;
 
 final class PreparedStatementTest extends TestCase
 {
-    public static function tearDownAfterClass(): void
+    /** @var list<string> */
+    private array $dbFiles = [];
+
+    protected function tearDown(): void
     {
-        parent::tearDownAfterClass();
-        @unlink('test.sqlite');
+        parent::tearDown();
+
+        foreach ($this->dbFiles as $file) {
+            foreach (['', '-wal', '-shm', '-journal'] as $suffix) {
+                $target = $file . $suffix;
+                if (file_exists($target)) {
+                    @unlink($target);
+                }
+            }
+        }
+
+        $this->dbFiles = [];
     }
 
     #[Test]
@@ -84,34 +97,37 @@ final class PreparedStatementTest extends TestCase
     #[Test]
     public function it_should_data_is_not_persisted_when_not_referenced_anymore(): void
     {
-        $sqlite = new SQLite('test.sqlite');
+        $path = $this->createDatabasePath();
+        $sqlite = new SQLite($path);
         $sqlite->getTable('test')->drop();
         $sqlite->test->getDynamicInsertTable()->push(['id' => '1']);
         $sqlite->test->getDynamicInsertTable()->push(['title' => 'foo']);
         $sqlite->test->getDynamicInsertTable()->push(['title' => 'bar']);
 
-        $sqlite = new SQLite('test.sqlite');
+        $sqlite = new SQLite($path);
         self::assertCount(3, $sqlite->test);
     }
 
     #[Test]
     public function it_should_data_is_not_persisted_when_opening_new_instance(): void
     {
-        $sqlite = new SQLite('test.sqlite');
+        $path = $this->createDatabasePath();
+        $sqlite = new SQLite($path);
         $sqlite->getTable('test')->drop();
         $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
         $table->push(['title' => 'bar']);
 
-        $sqlite = new SQLite('test.sqlite');
+        $sqlite = new SQLite($path);
         self::assertCount(1, $sqlite->test);
     }
 
     #[Test]
     public function it_should_data_is_persisted_after_commit(): void
     {
-        $sqlite = new SQLite('test.sqlite');
+        $path = $this->createDatabasePath();
+        $sqlite = new SQLite($path);
         $sqlite->getTable('test')->drop();
         $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
@@ -119,14 +135,15 @@ final class PreparedStatementTest extends TestCase
         $table->push(['title' => 'bar']);
         $sqlite->getConnection()->getTransaction()->commit();
 
-        $sqlite = new SQLite('test.sqlite');
+        $sqlite = new SQLite($path);
         self::assertCount(3, $sqlite->test);
     }
 
     #[Test]
     public function it_should_data_is_persisted_after_destructing_the_prepared_statement(): void
     {
-        $sqlite = new SQLite('test.sqlite');
+        $path = $this->createDatabasePath();
+        $sqlite = new SQLite($path);
         $sqlite->getTable('test')->drop();
 
         $table = $sqlite->test->getDynamicInsertTable();
@@ -314,7 +331,8 @@ final class PreparedStatementTest extends TestCase
     #[Test]
     public function it_should_transaction_is_committed_when_calling_count(): void
     {
-        $sqlite = new SQLite('test.sqlite');
+        $path = $this->createDatabasePath();
+        $sqlite = new SQLite($path);
         $sqlite->getTable('test')->drop();
         $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
@@ -340,5 +358,13 @@ final class PreparedStatementTest extends TestCase
         $t->pushWithoutKeys([123]);
 
         self::assertSame(123, $t->querySingle('select id from test'));
+    }
+
+    private function createDatabasePath(): string
+    {
+        $path = sys_get_temp_dir() . '/sqlite-' . uniqid('', true) . '.sqlite';
+        $this->dbFiles[] = $path;
+
+        return $path;
     }
 }
