@@ -301,6 +301,36 @@ final class ColumnTest extends TestCase
         self::assertSame('test', $c->getPlain());
     }
 
+    #[Test]
+    public function it_should_use_boolean_false_default_value(): void
+    {
+        $table = $this->SQLite->getTable('flag_false');
+        $table
+            ->addCreateColumn(Column::createTextColumn('flag', false))
+            ->createIfNotExists()
+        ;
+
+        self::assertSame('0', $table->schema()['flag']->getDefaultValue());
+
+        $this->SQLite->exec('insert into flag_false default values');
+        self::assertSame('0', $this->SQLite->fetchValue('select flag from flag_false'));
+    }
+
+    #[Test]
+    public function it_should_use_boolean_true_default_value(): void
+    {
+        $table = $this->SQLite->getTable('flag_true');
+        $table
+            ->addCreateColumn(Column::createTextColumn('flag', true))
+            ->createIfNotExists()
+        ;
+
+        self::assertSame('1', $table->schema()['flag']->getDefaultValue());
+
+        $this->SQLite->exec('insert into flag_true default values');
+        self::assertSame('1', $this->SQLite->fetchValue('select flag from flag_true'));
+    }
+
     public static function provideColumnDefaultValues(): iterable
     {
         yield 'integer' => [

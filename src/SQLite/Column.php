@@ -206,6 +206,10 @@ final class Column implements CreateColumnInterface, Stringable
             return $defaultValue;
         }
 
+        if (\is_bool($defaultValue)) {
+            return (string) (int) $defaultValue;
+        }
+
         return (string) $defaultValue;
     }
 
