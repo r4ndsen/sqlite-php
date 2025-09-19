@@ -318,6 +318,22 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
+    public function it_should_strip_null_bytes_when_binding_strings(): void
+    {
+        $content = Column::createTextColumn('content');
+
+        $this->SQLite->test
+            ->addCreateColumn($content)
+            ->create()
+        ;
+
+        $stm = $this->SQLite->prepare('insert into test (content) values (?)');
+        $stm->bind(["12\0"]); // null byte should be removed
+
+        self::assertSame('12', $this->SQLite->fetchValue('select content from test'));
+    }
+
+    #[Test]
     public function it_should_throw_on_non_scalar_input(): void
     {
         $id = Column::createIntegerColumn('id');

@@ -8,6 +8,7 @@ use BadFunctionCallException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
+use r4ndsen\SQLite\ColumnFactory\ColumnFactory;
 use Stringable;
 
 final class ColumnTest extends TestCase
@@ -15,7 +16,6 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_allow_default_value_as_float(): void
     {
-        // @phpstan-ignore argument.type
         $c = Column::createTextColumn('test', defaultValue: 1.2);
 
         self::assertSame('1.2', $c->getDefaultValue());
@@ -69,6 +69,16 @@ final class ColumnTest extends TestCase
 
         self::assertNull($c->getDefaultValue());
         self::assertSame(ColumnType::BLOB, $c->getType());
+    }
+
+    #[Test]
+    public function it_should_create_columns_from_factory_default_value(): void
+    {
+        $factory = new ColumnFactory('fallback');
+        $column = $factory->createColumn('foo');
+
+        self::assertSame('fallback', $column->getDefaultValue());
+        self::assertSame('foo', $column->getPlain());
     }
 
     #[Test]
@@ -185,6 +195,26 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
+    public function it_should_escape_single_quotes_in_default_value(): void
+    {
+        $column = Column::createTextColumn('author', "O'Reilly");
+
+        $table = $this->SQLite->getTable('quotes');
+        $table
+            ->addCreateColumn($column)
+            ->createIfNotExists()
+        ;
+
+        $schema = $table->schema();
+
+        self::assertArrayHasKey('author', $schema);
+        self::assertSame("O''Reilly", $schema['author']->getDefaultValue());
+
+        $this->SQLite->exec('insert into quotes default values');
+        self::assertSame("O'Reilly", $this->SQLite->fetchValue('select author from quotes'));
+    }
+
+    #[Test]
     public function it_should_get_create_statement(): void
     {
         $c = Column::createDefaultColumn('Test 1');
@@ -232,7 +262,6 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_keep_default_value_on_integer_column(): void
     {
-        // @phpstan-ignore  argument.type
         $c = new Column('foo', defaultValue: 1.2);
 
         $this->SQLite->getTable('test')->addCreateColumn($c)->create();

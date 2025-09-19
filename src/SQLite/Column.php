@@ -207,6 +207,7 @@ final class Column implements CreateColumnInterface, Stringable
             return $defaultValue;
         }
 
+        // @phpstan-ignore function.alreadyNarrowedType
         if (\is_int($defaultValue) || \is_float($defaultValue) || \is_bool($defaultValue)) {
             return (string) $defaultValue;
         }

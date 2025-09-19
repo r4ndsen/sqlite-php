@@ -59,7 +59,9 @@ final class AttachedTest extends TestCase
         $this->expectException(AttachedDatabaseException::class);
 
         self::assertTrue($this->SQLite->attach($this->attachedFile, 'one'));
+        self::assertTrue($this->SQLite->attach($this->encryptedFile, 'two'));
         self::assertTrue($this->SQLite->detach('one'));
+        self::assertTrue($this->SQLite->detach('two'));
         $this->SQLite->detach('one');
     }
 
