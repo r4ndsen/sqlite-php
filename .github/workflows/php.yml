@@ -30,11 +30,11 @@ jobs:
           - 8.3
           - 8.4
         experimental: [ false ]
-        include:
-          - php: 8.5
-            os: ubuntu-latest
-            experimental: true
-            composer-options: '--ignore-platform-reqs'
+        #include:
+        #  - php: 8.5
+        #    os: ubuntu-latest
+        #    experimental: true
+        #    composer-options: '--ignore-platform-reqs'
 
     steps:
       - name: Checkout
@@ -65,7 +65,9 @@ jobs:
         run: vendor/bin/psalm --taint-analysis --output-format=github
 
       - name: Run test suite with text coverage
-        run: vendor/bin/phpunit  --coverage-text --coverage-clover build/logs/clover.xml
+        run: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
+        env:
+          XDEBUG_MODE: coverage
 
       #- name: Upload coverage results to Coveralls
       #  if: matrix.experimental == false
