@@ -198,16 +198,8 @@ final class Column implements CreateColumnInterface, Stringable
             return null;
         }
 
-        if ($defaultValue instanceof Stringable) {
-            return (string) $defaultValue;
-        }
-
-        if (\is_string($defaultValue)) {
-            return $defaultValue;
-        }
-
         if (\is_bool($defaultValue)) {
-            return (string) (int) $defaultValue;
+            $defaultValue = (int) $defaultValue;
         }
 
         return (string) $defaultValue;
