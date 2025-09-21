@@ -60,8 +60,8 @@ class Table implements Countable, IteratorAggregate, Stringable
     protected bool $withTransaction = false;
 
     public function __construct(
-        protected Connection $conn,
-        protected string $name,
+        private Connection $conn,
+        private string $name,
     ) {
         $this->name = trim($name);
     }

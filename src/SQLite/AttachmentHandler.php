@@ -18,9 +18,9 @@ class AttachmentHandler
     use PragmaTrait;
 
     /** @var array<string,SQLite> */
-    protected array $connections = [];
+    private array $connections = [];
 
-    public function __construct(protected Connection $conn)
+    public function __construct(private Connection $conn)
     {
     }
 
@@ -88,7 +88,7 @@ class AttachmentHandler
         return false;
     }
 
-    protected function list(): array
+    private function list(): array
     {
         return $this->getPragma()->getDatabaseList();
     }

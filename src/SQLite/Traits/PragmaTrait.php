@@ -9,7 +9,7 @@ use r4ndsen\SQLite\Pragma;
 
 trait PragmaTrait
 {
-    protected Connection $conn;
+    private Connection $conn;
 
     private function getPragma(): Pragma
     {

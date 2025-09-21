@@ -14,14 +14,14 @@ use Stringable;
 
 final class PreparedStatement
 {
-    protected int $commitModulo = 10_000;
-    protected int $counter = 0;
-    protected SQLite3Stmt $stm;
-    protected ?Transaction $tx = null;
+    private int $commitModulo = 10_000;
+    private int $counter = 0;
+    private SQLite3Stmt $stm;
+    private ?Transaction $tx = null;
 
     public function __construct(
-        protected Connection $conn,
-        protected string $sql,
+        private Connection $conn,
+        private string $sql,
     ) {
     }
 
@@ -139,25 +139,6 @@ final class PreparedStatement
         return $this;
     }
 
-    /** @throws SQLiteException */
-    protected function executeStatement(): SQLite3Result
-    {
-        try {
-            // @phpstan-ignore return.type
-            return $this->getStatement()->execute();
-        } catch (SQLiteException $e) {
-            throw $e;
-        } catch (Exception $e) {
-            $this->conn->queryExceptionHandler->handle($e, $this->getSQL());
-        }
-    }
-
-    /** Initializes and returns the sqlite statement */
-    protected function getStatement(): SQLite3Stmt
-    {
-        return $this->stm ??= $this->conn->prepare($this->sql);
-    }
-
     /**
      * @throws BindValueException
      * @throws InvalidArgumentException
@@ -175,5 +156,24 @@ final class PreparedStatement
         if ($this->getStatement()->bindValue($param, $value, $type) === false) {
             throw new BindValueException(sprintf("Could not bind value: %s to key: '%s' on: %s", $value === null ? 'NULL' : sprintf("'%s'", (string) $value), $param, $this->sql));
         }
+    }
+
+    /** @throws SQLiteException */
+    private function executeStatement(): SQLite3Result
+    {
+        try {
+            // @phpstan-ignore return.type
+            return $this->getStatement()->execute();
+        } catch (SQLiteException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            $this->conn->queryExceptionHandler->handle($e, $this->getSQL());
+        }
+    }
+
+    /** Initializes and returns the sqlite statement */
+    private function getStatement(): SQLite3Stmt
+    {
+        return $this->stm ??= $this->conn->prepare($this->sql);
     }
 }

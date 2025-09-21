@@ -10,11 +10,11 @@ class Index
 {
     public const UNIQUE = 'UNIQUE';
 
-    protected string $genericName;
-    protected array $indexedColumns = [];
-    protected string $name;
-    protected string $unique = '';
-    protected string $where = '';
+    private string $genericName;
+    private array $indexedColumns = [];
+    private string $name;
+    private string $unique = '';
+    private string $where = '';
 
     public function __construct(Column ...$columns)
     {
@@ -82,12 +82,12 @@ class Index
         return $this;
     }
 
-    protected function getName(): ?string
+    private function getName(): string
     {
         return $this->name ?? $this->genericName;
     }
 
-    protected function setGenericName(Column $column): self
+    private function setGenericName(Column $column): self
     {
         $this->genericName = $column->getLowerTrimmedEscaped();
 

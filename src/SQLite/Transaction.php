@@ -12,7 +12,7 @@ final class Transaction
 
     private bool $active = false;
 
-    public function __construct(protected Connection $conn)
+    public function __construct(private Connection $conn)
     {
     }
 

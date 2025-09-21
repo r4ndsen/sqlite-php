@@ -19,7 +19,7 @@ final class Pragma implements Constant
 {
     use QueryTrait;
 
-    public function __construct(protected Connection $conn)
+    public function __construct(private Connection $conn)
     {
     }
 

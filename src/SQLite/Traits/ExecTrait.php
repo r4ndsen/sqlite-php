@@ -11,7 +11,7 @@ trait ExecTrait
 {
     use EscapeTrait;
 
-    protected Connection $conn;
+    private Connection $conn;
 
     /** @throws SQLiteException */
     public function exec(string $sql): bool

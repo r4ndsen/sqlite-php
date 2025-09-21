@@ -25,8 +25,8 @@ class SQLite
     use PragmaTrait;
     use QueryTrait;
 
-    protected ?AttachmentHandler $attachmentHandler = null;
-    protected ?TableFactoryInterface $tableFactory = null;
+    private ?AttachmentHandler $attachmentHandler = null;
+    private ?TableFactoryInterface $tableFactory = null;
 
     public function __construct(
         public readonly string $path = ':memory:',
@@ -133,27 +133,27 @@ class SQLite
         }
     }
 
-    protected function connect(): void
+    private function connect(): void
     {
         $this->conn = new Connection($this->path, $this->options);
     }
 
-    protected function getAttachmentHandler(): AttachmentHandler
+    private function getAttachmentHandler(): AttachmentHandler
     {
         return $this->attachmentHandler ??= new AttachmentHandler($this->conn);
     }
 
-    protected function getTableFactory(): TableFactoryInterface
+    private function getTableFactory(): TableFactoryInterface
     {
         return $this->tableFactory ??= new DefaultTableFactory($this->conn);
     }
 
-    protected function init(): void
+    private function init(): void
     {
         $this->loadExtensions();
     }
 
-    protected function loadExtensions(): void
+    private function loadExtensions(): void
     {
         (new Functions($this->conn))->registerDefaults();
         (new Collations($this->conn))->registerDefaults();

@@ -33,9 +33,9 @@ class DynamicInsert extends Table
      */
     protected bool $withRowid = false;
 
-    /** Enhances performance massively (500% and more) */
     protected bool $withTransaction = true;
 
+    /** Enhances performance massively (500% and more) */
     public function deleteColumn(Column $column): bool
     {
         try {
@@ -165,6 +165,14 @@ class DynamicInsert extends Table
         return false;
     }
 
+    protected function reset(): void
+    {
+        $this->columnCaseMap = null;
+        $this->preparedStatement = null;
+        $this->pushData = [];
+        $this->withRowid = false;
+    }
+
     /**
      * signalize we have come across that column.
      * this is used to store the first case occurring in the table.
@@ -196,21 +204,8 @@ class DynamicInsert extends Table
         $this->columnCaseMap[$trimColumnName] = $plainColumnName;
     }
 
-    private function lower(string $s): string
-    {
-        return mb_strtolower($s, 'UTF-8');
-    }
-
-    private function reset(): void
-    {
-        $this->columnCaseMap = null;
-        $this->preparedStatement = null;
-        $this->pushData = [];
-        $this->withRowid = false;
-    }
-
     /** @throws ColumnNameAmbiguousException */
-    private function seenRealColumn(string $columnName): void
+    protected function seenRealColumn(string $columnName): void
     {
         $lowerColumnName = $this->lower($columnName);
 
@@ -224,5 +219,10 @@ class DynamicInsert extends Table
         }
 
         $this->seenColumn($columnName);
+    }
+
+    private function lower(string $s): string
+    {
+        return mb_strtolower($s, 'UTF-8');
     }
 }
