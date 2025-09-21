@@ -15,7 +15,7 @@ class Collations extends AbstractExtension
         $identifier = $collation->getIdentifier();
 
         if (trim($identifier) === '') {
-            throw new InvalidCollationException('Failed to create collation: ' . $identifier);
+            throw new InvalidCollationException('Failed to create collation: identifier must not be empty');
         }
 
         $res = $this->registerCollation(

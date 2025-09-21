@@ -15,7 +15,7 @@ class Functions extends AbstractExtension
         $identifier = $function->getIdentifier();
 
         if (trim($identifier) === '') {
-            throw new InvalidFunctionException('Failed to create function: ' . $identifier);
+            throw new InvalidFunctionException('Failed to create function: identifier must not be empty');
         }
 
         $res = $this->registerFunction(

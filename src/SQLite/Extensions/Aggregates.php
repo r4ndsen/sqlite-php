@@ -15,7 +15,7 @@ class Aggregates extends AbstractExtension
         $identifier = $aggregate->getIdentifier();
 
         if (trim($identifier) === '') {
-            throw new InvalidAggregateException('Failed to create aggregate: ' . $identifier);
+            throw new InvalidAggregateException('Failed to create aggregate: identifier must not be empty');
         }
 
         $res = $this->registerAggregate(
