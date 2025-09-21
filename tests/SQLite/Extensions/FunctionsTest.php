@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite\Extensions;
 
+use Closure;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite\Exception\FunctionDoesNotExistException;
 use r4ndsen\SQLite\Exception\InvalidFunctionException;
@@ -40,7 +41,9 @@ final class FunctionsTest extends TestCase
         $pregReplace = new PregReplace();
         $callback = $pregReplace->getCallback();
 
-        $parameters = (new ReflectionFunction($callback))->getParameters();
+        $reflection = new ReflectionFunction(Closure::fromCallable($callback));
+
+        $parameters = $reflection->getParameters();
 
         self::assertSame(-1, $parameters[3]->getDefaultValue());
     }
@@ -164,7 +167,7 @@ final class FunctionsTest extends TestCase
         };
 
         $this->expectException(InvalidFunctionException::class);
-        $this->expectExceptionMessage('Failed to create function: ' . $identifier);
+        $this->expectExceptionMessage('Failed to create function: identifier must not be empty');
         $functions->add($failingFunction);
     }
 

@@ -160,7 +160,7 @@ final class CollationsTest extends TestCase
         };
 
         $this->expectException(InvalidCollationException::class);
-        $this->expectExceptionMessage('Failed to create collation: ' . $identifier);
+        $this->expectExceptionMessage('Failed to create collation: identifier must not be empty');
 
         $collations->add($failingCollation);
     }

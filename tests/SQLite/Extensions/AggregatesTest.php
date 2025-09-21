@@ -128,7 +128,7 @@ final class AggregatesTest extends TestCase
         };
 
         $this->expectException(InvalidAggregateException::class);
-        $this->expectExceptionMessage('Failed to create aggregate: ' . $identifier);
+        $this->expectExceptionMessage('Failed to create aggregate: identifier must not be empty');
 
         $aggregates->add($failingAggregate);
     }

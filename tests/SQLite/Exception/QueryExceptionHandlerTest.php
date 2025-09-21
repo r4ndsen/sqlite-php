@@ -43,6 +43,10 @@ final class QueryExceptionHandlerTest extends TestCase
         }
     }
 
+    /**
+     * @param class-string<SQLiteException>       $expectedException
+     * @param callable(SQLiteException):void|null $extraAssertions
+     */
     #[Test]
     #[DataProvider('providesKnownErrors')]
     public function it_maps_known_sqlite_errors(string $message, string $expectedException, ?callable $extraAssertions = null): void
