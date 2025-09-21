@@ -8,7 +8,7 @@ use r4ndsen\SQLite\Connection;
 
 abstract class AbstractExtension
 {
-    public function __construct(protected Connection $conn)
+    public function __construct(protected readonly Connection $conn)
     {
     }
 

@@ -12,7 +12,7 @@ class DefaultTableFactory implements TableFactoryInterface
     /** @var array<string, Table> */
     private array $tables = [];
 
-    public function __construct(protected Connection $conn)
+    public function __construct(protected readonly Connection $conn)
     {
     }
 

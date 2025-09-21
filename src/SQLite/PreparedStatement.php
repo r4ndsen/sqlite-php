@@ -20,8 +20,8 @@ final class PreparedStatement
     private ?Transaction $tx = null;
 
     public function __construct(
-        private Connection $conn,
-        private string $sql,
+        private readonly Connection $conn,
+        private readonly string $sql,
     ) {
     }
 
