@@ -12,14 +12,20 @@ class Aggregates extends AbstractExtension
     /** @throws InvalidAggregateException */
     public function add(AggregateInterface $aggregate): void
     {
-        $res = $this->conn->createAggregate(
-            $aggregate->getIdentifier(),
+        $identifier = $aggregate->getIdentifier();
+
+        if (trim($identifier) === '') {
+            throw new InvalidAggregateException('Failed to create aggregate: ' . $identifier);
+        }
+
+        $res = $this->registerAggregate(
+            $identifier,
             $aggregate->getCallback(),
             $aggregate->getFinalCallback()
         );
 
         if ($res === false) {
-            throw new InvalidAggregateException('Failed to create aggregate: ' . $aggregate->getIdentifier());
+            throw new InvalidAggregateException('Failed to create aggregate: ' . $identifier);
         }
     }
 
@@ -29,5 +35,10 @@ class Aggregates extends AbstractExtension
         $this->add(new Aggregates\GroupConcatUnique());
         $this->add(new Aggregates\First());
         $this->add(new Aggregates\Last());
+    }
+
+    protected function registerAggregate(string $identifier, callable $callback, callable $finalCallback): bool
+    {
+        return $this->conn->createAggregate($identifier, $callback, $finalCallback);
     }
 }

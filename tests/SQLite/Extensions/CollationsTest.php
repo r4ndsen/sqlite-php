@@ -6,6 +6,8 @@ namespace r4ndsen\SQLite\Extensions;
 
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite\Exception\CollationDoesNotExistException;
+use r4ndsen\SQLite\Exception\InvalidCollationException;
+use r4ndsen\SQLite\Extensions\Collations\CollationInterface;
 use r4ndsen\SQLite\TestCase;
 
 final class CollationsTest extends TestCase
@@ -135,6 +137,35 @@ final class CollationsTest extends TestCase
     }
 
     #[Test]
+    public function it_should_reject_blank_collation_identifier(): void
+    {
+        $collations = new Collations($this->SQLite->getConnection());
+
+        $identifier = str_repeat(' ', 2);
+
+        $failingCollation = new class($identifier) implements CollationInterface {
+            public function __construct(private readonly string $identifier)
+            {
+            }
+
+            public function getCallback(): callable
+            {
+                return static fn ($left, $right) => 0;
+            }
+
+            public function getIdentifier(): string
+            {
+                return $this->identifier;
+            }
+        };
+
+        $this->expectException(InvalidCollationException::class);
+        $this->expectExceptionMessage('Failed to create collation: ' . $identifier);
+
+        $collations->add($failingCollation);
+    }
+
+    #[Test]
     public function it_should_sort_order_on_strings_and_ints_with_native_sorting(): void
     {
         self::assertNotSame(
@@ -213,24 +244,30 @@ final class CollationsTest extends TestCase
     }
 
     #[Test]
-    public function it_should_throw_invalid_collation_when_registration_fails(): void
+    public function it_should_throw_invalid_collation_when_creation_fails(): void
     {
-        $connection = new \r4ndsen\SQLite();
-        $collations = new Collations($connection->getConnection());
+        $collations = new class($this->SQLite->getConnection()) extends Collations {
+            protected function registerCollation(string $identifier, callable $callback): bool
+            {
+                return false;
+            }
+        };
 
-        $failingCollation = new class implements Collations\CollationInterface {
+        $failingCollation = new class implements CollationInterface {
             public function getCallback(): callable
             {
-                return static fn () => 0;
+                return static fn ($left, $right) => 0;
             }
 
             public function getIdentifier(): string
             {
-                return '';
+                return 'failing_collation';
             }
         };
 
-        $this->expectException(\r4ndsen\SQLite\Exception\InvalidCollationException::class);
+        $this->expectException(InvalidCollationException::class);
+        $this->expectExceptionMessage('Failed to create collation: failing_collation');
+
         $collations->add($failingCollation);
     }
 }

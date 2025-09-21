@@ -6,11 +6,44 @@ namespace r4ndsen\SQLite\Extensions;
 
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite\Exception\FunctionDoesNotExistException;
+use r4ndsen\SQLite\Exception\InvalidFunctionException;
+use r4ndsen\SQLite\Extensions\Functions\PregReplace;
 use r4ndsen\SQLite\TestCase;
+use ReflectionFunction;
 use SQLite3;
 
 final class FunctionsTest extends TestCase
 {
+    #[Test]
+    public function it_should_cache_regex_validation_errors(): void
+    {
+        $regex = new class extends Functions\Regex {
+            public function validate(string $pattern): bool
+            {
+                return $this->validRegex($pattern);
+            }
+        };
+
+        self::assertFalse($regex->validate('/['));
+        self::assertSame(PREG_INTERNAL_ERROR, preg_last_error());
+
+        preg_match('/^$/', '');
+        self::assertSame(PREG_NO_ERROR, preg_last_error());
+
+        $regex->validate('/[');
+        self::assertSame(PREG_NO_ERROR, preg_last_error());
+    }
+
+    #[Test]
+    public function it_should_expose_default_preg_replace_limit(): void
+    {
+        $pregReplace = new PregReplace();
+        $callback = $pregReplace->getCallback();
+
+        $parameters = (new ReflectionFunction($callback))->getParameters();
+
+        self::assertSame(-1, $parameters[3]->getDefaultValue());
+    }
     #[Test]
     public function it_should_fail_with_exception_when_given_invalid_function(): void
     {
@@ -108,10 +141,42 @@ final class FunctionsTest extends TestCase
     }
 
     #[Test]
-    public function it_should_throw_invalid_function_when_registration_fails(): void
+    public function it_should_reject_blank_function_identifier(): void
     {
-        $connection = new \r4ndsen\SQLite();
-        $functions = new Functions($connection->getConnection());
+        $functions = new Functions($this->SQLite->getConnection());
+
+        $identifier = str_repeat(' ', 4);
+
+        $failingFunction = new class($identifier) implements Functions\FunctionInterface {
+            public function __construct(private readonly string $identifier)
+            {
+            }
+
+            public function getCallback(): callable
+            {
+                return static fn () => null;
+            }
+
+            public function getIdentifier(): string
+            {
+                return $this->identifier;
+            }
+        };
+
+        $this->expectException(InvalidFunctionException::class);
+        $this->expectExceptionMessage('Failed to create function: ' . $identifier);
+        $functions->add($failingFunction);
+    }
+
+    #[Test]
+    public function it_should_throw_invalid_function_when_creation_fails(): void
+    {
+        $functions = new class($this->SQLite->getConnection()) extends Functions {
+            protected function registerFunction(string $identifier, callable $callback): bool
+            {
+                return false;
+            }
+        };
 
         $failingFunction = new class implements Functions\FunctionInterface {
             public function getCallback(): callable
@@ -121,11 +186,13 @@ final class FunctionsTest extends TestCase
 
             public function getIdentifier(): string
             {
-                return '';
+                return 'failing_function';
             }
         };
 
-        $this->expectException(\r4ndsen\SQLite\Exception\InvalidFunctionException::class);
+        $this->expectException(InvalidFunctionException::class);
+        $this->expectExceptionMessage('Failed to create function: failing_function');
+
         $functions->add($failingFunction);
     }
 

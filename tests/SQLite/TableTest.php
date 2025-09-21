@@ -516,6 +516,21 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_trim_table_name_and_match_multibyte_columns(): void
+    {
+        $rawName = '  ' . __FUNCTION__ . '  ';
+        $table = new Table($this->SQLite->getConnection(), $rawName);
+        $table->addCreateColumn(Column::createDefaultColumn('Ä'));
+
+        self::assertTrue($table->create());
+        self::assertSame(trim($rawName), $table->getName());
+        self::assertSame('`' . trim($rawName) . '`', (string) $table);
+
+        self::assertTrue($table->columnExists('  ä  '));
+        self::assertFalse($table->columnExists('ö'));
+    }
+
+    #[Test]
     public function it_should_truncate_table(): void
     {
         $this->expectException(TableDoesNotExistException::class);

@@ -12,13 +12,19 @@ class Collations extends AbstractExtension
     /** @throws InvalidCollationException */
     public function add(CollationInterface $collation): void
     {
-        $res = $this->conn->createCollation(
-            $collation->getIdentifier(),
+        $identifier = $collation->getIdentifier();
+
+        if (trim($identifier) === '') {
+            throw new InvalidCollationException('Failed to create collation: ' . $identifier);
+        }
+
+        $res = $this->registerCollation(
+            $identifier,
             $collation->getCallback()
         );
 
         if ($res === false) {
-            throw new InvalidCollationException('Failed to create collation: ' . $collation->getIdentifier());
+            throw new InvalidCollationException('Failed to create collation: ' . $identifier);
         }
     }
 
@@ -26,5 +32,10 @@ class Collations extends AbstractExtension
     {
         $this->add(new Collations\NaturalCompare());
         $this->add(new Collations\NumericalCompare());
+    }
+
+    protected function registerCollation(string $identifier, callable $callback): bool
+    {
+        return $this->conn->createCollation($identifier, $callback);
     }
 }

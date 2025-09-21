@@ -28,6 +28,22 @@ final class QueryExceptionHandlerTest extends TestCase
     }
 
     #[Test]
+    public function it_defaults_to_query_exception(): void
+    {
+        $handler = new QueryExceptionHandler($this->connection);
+        $sql = 'DELETE FROM foo';
+        $previous = new RuntimeException('unexpected failure');
+
+        try {
+            $handler->handle($previous, $sql);
+        } catch (QueryException $exception) {
+            self::assertSame($sql, $exception->getQuery());
+            self::assertSame('unexpected failure', $exception->getMessage());
+            self::assertSame(ErrorCode::SQLITE_OK, $exception->errorCode);
+        }
+    }
+
+    #[Test]
     #[DataProvider('providesKnownErrors')]
     public function it_maps_known_sqlite_errors(string $message, string $expectedException, ?callable $extraAssertions = null): void
     {
@@ -35,7 +51,6 @@ final class QueryExceptionHandlerTest extends TestCase
 
         try {
             $handler->handle(new RuntimeException($message), 'SELECT 1');
-            self::fail('Expected exception was not thrown.');
         } catch (SQLiteException $exception) {
             self::assertInstanceOf($expectedException, $exception);
             self::assertSame(ErrorCode::SQLITE_OK, $exception->errorCode);
@@ -126,22 +141,5 @@ final class QueryExceptionHandlerTest extends TestCase
             ViewConstraintException::class,
             static fn (ViewConstraintException $exception) => self::assertSame('example_view', $exception->getViewName()),
         ];
-    }
-
-    #[Test]
-    public function it_defaults_to_query_exception(): void
-    {
-        $handler = new QueryExceptionHandler($this->connection);
-        $sql = 'DELETE FROM foo';
-        $previous = new RuntimeException('unexpected failure');
-
-        try {
-            $handler->handle($previous, $sql);
-            self::fail('Expected QueryException was not thrown.');
-        } catch (QueryException $exception) {
-            self::assertSame($sql, $exception->getQuery());
-            self::assertSame('unexpected failure', $exception->getMessage());
-            self::assertSame(ErrorCode::SQLITE_OK, $exception->errorCode);
-        }
     }
 }

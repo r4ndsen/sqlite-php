@@ -6,6 +6,9 @@ namespace r4ndsen\SQLite\Extensions;
 
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite\ColumnFactory\ColumnFactory;
+use r4ndsen\SQLite\Exception\InvalidAggregateException;
+use r4ndsen\SQLite\Extensions\Aggregates\AggregateInterface;
+use r4ndsen\SQLite\Extensions\Aggregates\GroupConcatUnique;
 use r4ndsen\SQLite\TestCase;
 
 final class AggregatesTest extends TestCase
@@ -97,12 +100,17 @@ final class AggregatesTest extends TestCase
     }
 
     #[Test]
-    public function it_should_throw_invalid_aggregate_when_registration_fails(): void
+    public function it_should_reject_blank_aggregate_identifier(): void
     {
-        $connection = new \r4ndsen\SQLite();
-        $aggregates = new Aggregates($connection->getConnection());
+        $aggregates = new Aggregates($this->SQLite->getConnection());
 
-        $failingAggregate = new class implements Aggregates\AggregateInterface {
+        $identifier = str_repeat(' ', 3);
+
+        $failingAggregate = new class($identifier) implements AggregateInterface {
+            public function __construct(private readonly string $identifier)
+            {
+            }
+
             public function getCallback(): callable
             {
                 return static fn () => null;
@@ -115,11 +123,61 @@ final class AggregatesTest extends TestCase
 
             public function getIdentifier(): string
             {
-                return '';
+                return $this->identifier;
             }
         };
 
-        $this->expectException(\r4ndsen\SQLite\Exception\InvalidAggregateException::class);
+        $this->expectException(InvalidAggregateException::class);
+        $this->expectExceptionMessage('Failed to create aggregate: ' . $identifier);
+
+        $aggregates->add($failingAggregate);
+    }
+
+    #[Test]
+    public function it_should_store_unique_group_concat_entries_as_booleans(): void
+    {
+        $aggregate = new GroupConcatUnique();
+        $callback = $aggregate->getCallback();
+
+        $context = $callback(null, 1, 'alpha');
+        $context = $callback($context, 2, 'alpha');
+
+        self::assertTrue($context['data']['alpha']);
+
+        $final = $aggregate->getFinalCallback();
+        self::assertSame('alpha', $final($context));
+    }
+
+    #[Test]
+    public function it_should_throw_invalid_aggregate_when_creation_fails(): void
+    {
+        $aggregates = new class($this->SQLite->getConnection()) extends Aggregates {
+            protected function registerAggregate(string $identifier, callable $callback, callable $finalCallback): bool
+            {
+                return false;
+            }
+        };
+
+        $failingAggregate = new class implements AggregateInterface {
+            public function getCallback(): callable
+            {
+                return static fn () => null;
+            }
+
+            public function getFinalCallback(): callable
+            {
+                return static fn () => null;
+            }
+
+            public function getIdentifier(): string
+            {
+                return 'failing_aggregate';
+            }
+        };
+
+        $this->expectException(InvalidAggregateException::class);
+        $this->expectExceptionMessage('Failed to create aggregate: failing_aggregate');
+
         $aggregates->add($failingAggregate);
     }
 }

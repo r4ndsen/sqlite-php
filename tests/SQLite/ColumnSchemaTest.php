@@ -10,6 +10,23 @@ use PHPUnit\Framework\TestCase;
 final class ColumnSchemaTest extends TestCase
 {
     #[Test]
+    public function it_handles_nullable_defaults_and_non_private_keys(): void
+    {
+        $schema = new ColumnSchema(
+            columnId: 1,
+            name: 'Title',
+            type: 'TEXT',
+            notNull: 0,
+            defaultValue: 'null',
+            primaryKey: 0,
+        );
+
+        self::assertNull($schema->defaultValue);
+        self::assertFalse($schema->notNull);
+        self::assertFalse($schema->isPrivateKey);
+        self::assertSame(ColumnType::TEXT, $schema->type);
+    }
+    #[Test]
     public function it_initialises_properties_from_schema_rows(): void
     {
         $schema = new ColumnSchema(
@@ -27,23 +44,5 @@ final class ColumnSchemaTest extends TestCase
         self::assertSame('foo', $schema->defaultValue);
         self::assertTrue($schema->isPrivateKey);
         self::assertSame(ColumnType::INTEGER, $schema->type);
-    }
-
-    #[Test]
-    public function it_handles_nullable_defaults_and_non_private_keys(): void
-    {
-        $schema = new ColumnSchema(
-            columnId: 1,
-            name: 'Title',
-            type: 'TEXT',
-            notNull: 0,
-            defaultValue: 'null',
-            primaryKey: 0,
-        );
-
-        self::assertNull($schema->defaultValue);
-        self::assertFalse($schema->notNull);
-        self::assertFalse($schema->isPrivateKey);
-        self::assertSame(ColumnType::TEXT, $schema->type);
     }
 }

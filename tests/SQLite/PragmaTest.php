@@ -97,6 +97,13 @@ final class PragmaTest extends TestCase
     }
 
     #[Test]
+    public function it_should_parse_numeric_synchronous_strings(): void
+    {
+        self::assertSame(Pragma\Synchronous::NORMAL, Pragma\Synchronous::fromString('1'));
+        self::assertSame(Pragma\Synchronous::EXTRA, Pragma\Synchronous::fromString('3'));
+    }
+
+    #[Test]
     public function it_should_pragma_cache_size(): void
     {
         $pragma = $this->SQLite->pragma;
@@ -196,6 +203,15 @@ final class PragmaTest extends TestCase
         self::assertSame(8_192, $pragma->page_size);
 
         $pragma->setPageSize(10);
+    }
+
+    #[Test]
+    public function it_should_reject_unknown_synchronous_values(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid value for pragma.synchronous: nope');
+
+        Pragma\Synchronous::fromString('nope');
     }
 
     #[Test]

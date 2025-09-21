@@ -12,13 +12,19 @@ class Functions extends AbstractExtension
     /** @throws InvalidFunctionException */
     public function add(FunctionInterface $function): void
     {
-        $res = $this->conn->createFunction(
-            $function->getIdentifier(),
+        $identifier = $function->getIdentifier();
+
+        if (trim($identifier) === '') {
+            throw new InvalidFunctionException('Failed to create function: ' . $identifier);
+        }
+
+        $res = $this->registerFunction(
+            $identifier,
             $function->getCallback()
         );
 
         if ($res === false) {
-            throw new InvalidFunctionException('Failed to create function: ' . $function->getIdentifier());
+            throw new InvalidFunctionException('Failed to create function: ' . $identifier);
         }
     }
 
@@ -29,5 +35,10 @@ class Functions extends AbstractExtension
         $this->add(new Functions\IsEmpty());
         $this->add(new Functions\PregMatch());
         $this->add(new Functions\PregReplace());
+    }
+
+    protected function registerFunction(string $identifier, callable $callback): bool
+    {
+        return $this->conn->createFunction($identifier, $callback);
     }
 }
