@@ -1,0 +1,30 @@
+parameters:
+	tmpDir: build/phpstan.cache
+
+	level: 9
+
+	paths:
+		- src
+		- tests
+
+	reportUnmatchedIgnoredErrors: true
+	treatPhpDocTypesAsCertain: false
+
+	ignoreErrors:
+		- identifier: missingType.iterableValue
+		- identifier: missingType.generics
+		-
+			path: tests
+			identifier: property.notFound
+		-
+			path: tests/SQLite/Traits/QueryTraitTest.php
+			identifier: property.unused
+		-
+			path: tests/SQLite/Traits/QueryTraitTest.php
+			identifier: property.onlyWritten
+		-
+			path: tests/SQLite/Traits/QueryTraitTest.php
+			identifier: identical.alwaysTrue
+		-
+		    path: src/SQLite/Pragma.php
+		    identifier: argument.type

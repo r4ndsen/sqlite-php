@@ -1,0 +1,75 @@
+name: PHP Composer
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }} tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        php:
+          - 8.2
+          - 8.3
+          - 8.4
+        experimental: [ false ]
+        #include:
+        #  - php: 8.5
+        #    os: ubuntu-latest
+        #    experimental: true
+        #    composer-options: '--ignore-platform-reqs'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP with SQLite3 and Xdebug
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sqlite3, xdebug
+          coverage: xdebug
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Install composer dependencies
+        uses: ramsey/composer-install@v1
+        with:
+          composer-options: ${{ matrix.composer-options }}
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --ansi
+
+      - name: Run Psalm
+        run: vendor/bin/psalm --taint-analysis --output-format=github
+
+      - name: Run test suite with text coverage
+        run: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
+        env:
+          XDEBUG_MODE: coverage
+
+      #- name: Upload coverage results to Coveralls
+      #  if: matrix.experimental == false
+      #  env:
+      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  run: |
+      #    composer require php-coveralls/php-coveralls --dev --no-interaction --with-all-dependencies
+      #    vendor/bin/php-coveralls --coverage_clover=build/logs/clover.xml --verbose

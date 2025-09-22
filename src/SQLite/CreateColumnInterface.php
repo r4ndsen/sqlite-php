@@ -1,0 +1,10 @@
+<?php
+
+declare(strict_types=1);
+
+namespace r4ndsen\SQLite;
+
+interface CreateColumnInterface
+{
+    public function getCreateStatement(): string;
+}

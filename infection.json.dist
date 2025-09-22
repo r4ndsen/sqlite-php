@@ -1,0 +1,14 @@
+{
+    "timeout": 10,
+    "source": {
+        "directories": [
+            "src"
+        ]
+    },
+    "logs": {
+        "html": "build/infection.html"
+    },
+    "mutators": {
+        "@default": true
+    }
+}
