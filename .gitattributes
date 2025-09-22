@@ -8,8 +8,12 @@ composer.lock        export-ignore
 docker-compose.yml   export-ignore
 infection.json.dist  export-ignore
 phpbench.json        export-ignore
-phpstan.neon         export-ignore
+phpstan.neon.dist    export-ignore
 phpunit.xml          export-ignore
-psalm.xml            export-ignore
+psalm.xml.dist       export-ignore
 Makefile             export-ignore
 rector.php           export-ignore
+build/               export-ignore
+CHANGELOG.md         export-ignore
+AGENTS.md            export-ignore
+WARP.md              export-ignore
