@@ -123,7 +123,7 @@ class DynamicInsert extends Table
             $this->seenRealColumn($column->getRaw());
         }
 
-        return $this->columnCaseMap;
+        return $this->columnCaseMap ?? [];
     }
 
     /** Prepares the pushData array with their default values in order */
