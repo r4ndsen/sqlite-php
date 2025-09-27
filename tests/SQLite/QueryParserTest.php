@@ -14,13 +14,13 @@ final class QueryParserTest extends TestCase
     {
         $parameters = ['foo' => ['bar', 'baz']];
         $sql = <<<SQL
-SELECT ":foo"
+select ":foo"
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<<SQL
-SELECT "to use double quotes, just double them "" :foo "
+select "to use double quotes, just double them "" :foo "
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
@@ -31,31 +31,31 @@ SQL;
     {
         $parameters = ['foo' => ['bar', 'baz']];
         $sql = <<<SQL
-SELECT 'Escaping \' :foo \''
+select 'Escaping \' :foo \''
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<< 'SQL'
-SELECT "Escaping \" :foo \""
+select "Escaping \" :foo \""
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<<SQL
-SELECT "Escaping \" :foo \"
+select "Escaping \" :foo \"
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<<SQL
-SELECT "Escaping "" :foo """
+select "Escaping "" :foo """
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<<SQL
-SELECT 'Escaping '' :foo '''
+select 'Escaping '' :foo '''
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
@@ -64,7 +64,7 @@ SQL;
     #[Test]
     public function it_should_issue107(): void
     {
-        $sql = "UPDATE table SET `value`=:value, `blank`='', `value2` = :value2, `blank2` = '', `value3`=:value3 WHERE id = :id";
+        $sql = "update table set `value`=:value, `blank`='', `value2` = :value2, `blank2` = '', `value3`=:value3 where id = :id";
         $parameters = [
             'value'  => 'string',
             'value2' => 'string',
@@ -109,17 +109,17 @@ SQL;
     public function it_should_replace_array_as_parameter(): void
     {
         $parameters = ['foo' => ['bar', 'baz']];
-        $sql = 'SELECT :foo';
+        $sql = 'select :foo';
         [$statement, $values] = $this->rebuild($sql, $parameters);
-        $expectedStatement = 'SELECT :foo_0, :foo_1';
+        $expectedStatement = 'select :foo_0, :foo_1';
         $expectedValues = ['foo_0' => 'bar', 'foo_1' => 'baz'];
         self::assertSame($expectedStatement, $statement);
         self::assertSame($expectedValues, $values);
 
         $parameters = [['bar', 'baz']];
-        $sql = 'SELECT ?';
+        $sql = 'select ?';
         [$statement, $values] = $this->rebuild($sql, $parameters);
-        $expectedStatement = 'SELECT :__1, :__2';
+        $expectedStatement = 'select :__1, :__2';
         $expectedValues = ['__1' => 'bar', '__2' => 'baz'];
         self::assertSame($expectedStatement, $statement);
         self::assertSame($expectedValues, $values);
@@ -129,9 +129,9 @@ SQL;
     public function it_should_replace_multiple_uses_of_named_parameter(): void
     {
         $parameters = ['foo' => 'bar'];
-        $sql = 'SELECT :foo AS a, :foo AS b';
+        $sql = 'select :foo as a, :foo as b';
         [$statement, $values] = $this->rebuild($sql, $parameters);
-        $expectedStatement = 'SELECT :foo AS a, :foo__1 AS b';
+        $expectedStatement = 'select :foo as a, :foo__1 as b';
         $expectedValues = ['foo' => 'bar', 'foo__1' => 'bar'];
         self::assertSame($expectedStatement, $statement);
         self::assertSame($expectedValues, $values);
@@ -141,9 +141,9 @@ SQL;
     public function it_should_replace_numbered_parameter(): void
     {
         $parameters = ['bar', 'baz', null];
-        $sql = 'SELECT ? AS a, ? AS b FROM table WHERE id = ?';
+        $sql = 'select ? as a, ? as b from table where id = ?';
         [$statement, $values] = $this->rebuild($sql, $parameters);
-        $expectedStatement = 'SELECT :__1 AS a, :__2 AS b FROM table WHERE id = :__3';
+        $expectedStatement = 'select :__1 as a, :__2 as b from table where id = :__3';
         $expectedValues = ['__1' => 'bar', '__2' => 'baz', '__3' => null];
         self::assertSame($expectedStatement, $statement);
         self::assertSame($expectedValues, $values);
@@ -154,19 +154,19 @@ SQL;
     {
         $parameters = ['foo' => ['bar', 'baz']];
         $sql = <<<SQL
-SELECT ':foo'
+select ':foo'
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<<SQL
-SELECT 'single quote''s :foo'
+select 'single quote''s :foo'
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
 
         $sql = <<<SQL
-SELECT 'multi line string'
+select 'multi line string'
 ':foo'
 'bar'
 SQL;

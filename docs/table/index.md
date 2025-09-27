@@ -41,9 +41,9 @@ $dataTable->create();
 
 ```sql
 create table `data` (
-    `id` INTEGER default '',
-    `title` TEXT default null,
-    UNIQUE (`title`) ON CONFLICT IGNORE
+    `id` integer default '',
+    `title` text default null,
+    unique (`title`) on conflict ignore
 )
 ```
 
@@ -62,7 +62,7 @@ $data = $dataTable->toArray();
 Count rows without writing SQL:
 
 ```php
-$count = count($dataTable); // SELECT count(*) FROM data
+$count = count($dataTable); // select count(*) from data
 ```
 
 ## Using tables inline
@@ -72,7 +72,7 @@ benefit from automatic identifier quoting.
 
 ```php
 $table = $sqlite->getTable('bulk inserts');
-$result = $sqlite->fetchOne("SELECT rowid, * FROM $table");
+$result = $sqlite->fetchOne("select rowid, * from $table");
 ```
 
 ```sql

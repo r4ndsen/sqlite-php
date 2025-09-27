@@ -127,10 +127,10 @@ final class TableTest extends TestCase
         $constraint = new TableConstraint();
         $constraint->addIndexedColumn($column);
         $constraint->uniqueKey();
-        self::assertSame('UNIQUE (`test`)', $constraint->getCreateStatement());
+        self::assertSame('unique (`test`)', $constraint->getCreateStatement());
 
         $constraint->primaryKey();
-        self::assertSame('PRIMARY KEY (`test`)', $constraint->getCreateStatement());
+        self::assertSame('primary key (`test`)', $constraint->getCreateStatement());
 
         $t->addCreateColumn($column);
         $t->addConstraint($constraint);
@@ -201,12 +201,12 @@ final class TableTest extends TestCase
         $constraint = new TableConstraint();
         $constraint->addIndexedColumn($column);
         $constraint->uniqueKey();
-        self::assertSame('UNIQUE (`test`)', $constraint->getCreateStatement());
+        self::assertSame('unique (`test`)', $constraint->getCreateStatement());
 
         $constraint->onConflict = OnConflict::IGNORE;
 
         $constraint->setName(' my constraint ');
-        self::assertSame('CONSTRAINT `my constraint` UNIQUE (`test`) ON CONFLICT IGNORE', $constraint->getCreateStatement());
+        self::assertSame('constraint `my constraint` unique (`test`) on conflict ignore', $constraint->getCreateStatement());
 
         $t->addCreateColumn($column);
         $t->addConstraint($constraint);

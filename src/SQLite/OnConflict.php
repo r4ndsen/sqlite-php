@@ -14,6 +14,6 @@ enum OnConflict
 
     public function String(): string
     {
-        return 'ON CONFLICT ' . $this->name;
+        return 'on conflict ' . strtolower($this->name);
     }
 }

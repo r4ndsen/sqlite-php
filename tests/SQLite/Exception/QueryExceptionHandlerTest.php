@@ -31,7 +31,7 @@ final class QueryExceptionHandlerTest extends TestCase
     public function it_defaults_to_query_exception(): void
     {
         $handler = new QueryExceptionHandler($this->connection);
-        $sql = 'DELETE FROM foo';
+        $sql = 'delete from foo';
         $previous = new RuntimeException('unexpected failure');
 
         try {
@@ -54,7 +54,7 @@ final class QueryExceptionHandlerTest extends TestCase
         $handler = new QueryExceptionHandler($this->connection);
 
         try {
-            $handler->handle(new RuntimeException($message), 'SELECT 1');
+            $handler->handle(new RuntimeException($message), 'select 1');
         } catch (SQLiteException $exception) {
             self::assertInstanceOf($expectedException, $exception);
             self::assertSame(ErrorCode::SQLITE_OK, $exception->errorCode);

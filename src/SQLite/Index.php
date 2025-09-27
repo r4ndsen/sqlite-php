@@ -8,7 +8,7 @@ use BadMethodCallException;
 
 class Index
 {
-    public const UNIQUE = 'UNIQUE';
+    public const UNIQUE = 'unique';
 
     private string $genericName;
     private array $indexedColumns = [];
@@ -44,9 +44,9 @@ class Index
             throw new BadMethodCallException('You are using multiple index columns. Please choose an index name: setName()');
         }
 
-        return 'CREATE ' . trim(
+        return 'create ' . trim(
             sprintf(
-                '%s INDEX if not exists %s on %%s (%s) %s',
+                '%s index if not exists %s on %%s (%s) %s',
                 $this->unique,
                 $this->getName(),
                 implode(', ', $this->indexedColumns),

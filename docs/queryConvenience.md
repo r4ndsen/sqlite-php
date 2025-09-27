@@ -5,7 +5,7 @@ optional array of bound values. Named placeholders can be passed with or without
 leading colons; both styles work.
 
 ```php
-$sql  = 'SELECT * FROM `table` WHERE foo = :foo AND bar = :bar';
+$sql  = 'select * from `table` where foo = :foo and bar = :bar';
 $bind = ['foo' => 'baz', 'bar' => 'dib'];
 ```
 

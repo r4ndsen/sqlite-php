@@ -11,8 +11,8 @@ final class TableConstraint implements CreateColumnInterface
 {
     use EscapeTrait;
 
-    public const PRIMARY_KEY = 'PRIMARY KEY';
-    public const UNIQUE = 'UNIQUE';
+    public const PRIMARY_KEY = 'primary key';
+    public const UNIQUE = 'unique';
 
     public ?OnConflict $onConflict = null;
 
@@ -59,7 +59,7 @@ final class TableConstraint implements CreateColumnInterface
 
     public function setName(string $name): self
     {
-        $this->name = 'CONSTRAINT ' . self::backtickIdentifier(trim($name));
+        $this->name = 'constraint ' . self::backtickIdentifier(trim($name));
 
         return $this;
     }
