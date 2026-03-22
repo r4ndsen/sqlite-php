@@ -55,7 +55,7 @@ final class Connection extends SQLite3
     public function prepare(string $query): SQLite3Stmt
     {
         try {
-            // @phpstan-ignore return.type
+            /** @phpstan-ignore return.type */
             return parent::prepare($query);
         } catch (Exception $e) {
             $this->queryExceptionHandler->handle($e, $query);
@@ -66,7 +66,7 @@ final class Connection extends SQLite3
     public function query(string $query): SQLite3Result
     {
         try {
-            // @phpstan-ignore return.type
+            /** @phpstan-ignore return.type */
             return parent::query($query);
         } catch (Exception $e) {
             $this->queryExceptionHandler->handle($e, $query);
@@ -93,7 +93,7 @@ final class Connection extends SQLite3
         }
     }
 
-    /** Finalized any open transaction before executing. */
+    // Finalize any open transaction before executing.
     public function vacuum(): bool
     {
         $this->getTransaction()->commit();

@@ -42,7 +42,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     /**
      * Holds columns to create the table.
      *
-     * @var Column[]|CreateColumnInterface[]
+     * @var Column[]|CreateColumn[]
      */
     protected array $createColumns = [];
 
@@ -53,10 +53,10 @@ class Table implements Countable, IteratorAggregate, Stringable
      */
     protected array $createConstraints = [];
 
-    /** Utilized by the push() method */
+    // Utilized by the push() method
     protected ?PreparedStatement $preparedStatement = null;
 
-    /** Indicate whether to use transactions for prepared statements */
+    // Indicate whether to use transactions for prepared statements
     protected bool $withTransaction = false;
 
     public function __construct(
@@ -96,7 +96,7 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this;
     }
 
-    public function addCreateColumn(CreateColumnInterface $column): static
+    public function addCreateColumn(CreateColumn $column): static
     {
         $this->createColumns[] = $column;
 
@@ -139,7 +139,7 @@ class Table implements Countable, IteratorAggregate, Stringable
             return 0;
         }
 
-        // @phpstan-ignore return.type
+        /** @phpstan-ignore return.type */
         return $this->querySingle('select count(*) from ' . $this);
     }
 

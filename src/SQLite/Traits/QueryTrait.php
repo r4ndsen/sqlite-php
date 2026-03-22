@@ -129,11 +129,23 @@ trait QueryTrait
      */
     public function fetchPair(string $sql, array $bind = []): array
     {
-        foreach ($this->yieldPairs($sql, $bind) as $key => $value) {
-            return [$key => $value];
-        }
+        $result = $this->perform($sql, $bind);
 
-        return [];
+        try {
+            $row = $result->fetchArray(SQLITE3_NUM);
+            if ($row === false) {
+                return [];
+            }
+
+            $key = $row[0] ?? '';
+            if (!\is_int($key) && !\is_string($key)) {
+                $key = (string) $key;
+            }
+
+            return [$key => $row[1] ?? null];
+        } finally {
+            $result->finalize();
+        }
     }
 
     /**
@@ -143,7 +155,24 @@ trait QueryTrait
      */
     public function fetchPairs(string $sql, array $bind = []): array
     {
-        return iterator_to_array($this->yieldPairs($sql, $bind), true);
+        $result = $this->perform($sql, $bind);
+
+        try {
+            $pairs = [];
+
+            while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
+                $key = $row[0] ?? '';
+                if (!\is_int($key) && !\is_string($key)) {
+                    $key = (string) $key;
+                }
+
+                $pairs[$key] = $row[1] ?? null;
+            }
+
+            return $pairs;
+        } finally {
+            $result->finalize();
+        }
     }
 
     public function fetchPlain(string $sql, array $bind = []): array
@@ -284,7 +313,6 @@ trait QueryTrait
                 $object = $reflectionClass->newInstanceArgs($cArgs);
             } else {
                 $constructor = $reflectionClass->getConstructor();
-                $constructor?->setAccessible(true);
                 $object = $reflectionClass->newInstanceWithoutConstructor();
 
                 $constructor?->invokeArgs($object, $cArgs);
@@ -293,11 +321,10 @@ trait QueryTrait
             foreach ($row as $key => $value) {
                 if ($reflectionClass->hasProperty((string) $key)) {
                     $property = $reflectionClass->getProperty($key);
-                    $property->setAccessible(true);
                     $property->setValue($object, $value);
                 } else {
                     try {
-                        // @phpstan-ignore argument.type
+                        /** @phpstan-ignore argument.type */
                         set_error_handler(static fn () => null, E_DEPRECATED);
                         $object->{$key} = $value;
                     } finally {
@@ -317,8 +344,21 @@ trait QueryTrait
      */
     public function yieldPairs(string $sql, array $bind = []): Generator
     {
-        foreach ($this->yieldPlain($sql, $bind) as $row) {
-            yield $row[0] => $row[1] ?? null;
+        $result = $this->perform($sql, $bind);
+
+        try {
+            while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
+                $key = $row[0] ?? '';
+                if ($key === null) {
+                    $key = '';
+                } elseif (!\is_int($key) && !\is_string($key)) {
+                    $key = (string) $key;
+                }
+
+                yield $key => $row[1] ?? null;
+            }
+        } finally {
+            $result->finalize();
         }
     }
 
@@ -343,10 +383,13 @@ trait QueryTrait
      */
     private function fetchArray(SQLite3Result $result, int $mode = SQLITE3_ASSOC): Generator
     {
-        while (($row = $result->fetchArray($mode)) !== false) {
-            yield $row;
+        try {
+            while (($row = $result->fetchArray($mode)) !== false) {
+                yield $row;
+            }
+        } finally {
+            $result->finalize();
         }
-        $result->finalize();
     }
 
     /**

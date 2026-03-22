@@ -76,7 +76,7 @@ class AttachmentHandler
         return $this->connections[$identifier] ?? throw new AttachedDatabaseException('No attached sqlite with identifier: ' . $identifier);
     }
 
-    /** returns whether a database with given identifier attached. */
+    // Returns whether a database with given identifier attached.
     public function has(string $identifier): bool
     {
         foreach ($this->list() as $item) {

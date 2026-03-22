@@ -39,7 +39,7 @@ final class QueryTraitTest extends TestCase
     public function it_should_fetch_col(): void
     {
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
         $table->push(['id' => 2]);
@@ -55,7 +55,7 @@ final class QueryTraitTest extends TestCase
     public function it_should_fetch_generators(): void
     {
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
         $table->push(['id' => 2]);
@@ -77,7 +77,7 @@ final class QueryTraitTest extends TestCase
     public function it_should_fetch_object(): void
     {
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
 
@@ -86,11 +86,11 @@ final class QueryTraitTest extends TestCase
 
         $object = $this->SQLite->fetchObject('select 1');
         self::assertInstanceOf(stdClass::class, $object);
-        self::assertSame($object->{1}, 1);
+        self::assertSame(1, $object->{1});
 
         $object = $this->SQLite->fetchObject('select "bar" as foo');
         self::assertInstanceOf(stdClass::class, $object);
-        self::assertSame($object->foo, 'bar');
+        self::assertSame('bar', $object->foo);
 
         $objects = $this->SQLite->fetchObjects('select "bar" as foo');
         self::assertEquals([$object], $objects);
@@ -98,26 +98,26 @@ final class QueryTraitTest extends TestCase
         $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class);
         self::assertNotNull($object);
         self::assertInstanceOf(WithPrivateConstructor::class, $object);
-        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private', true)->getValue($object));
+        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private')->getValue($object));
 
         $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `private`', ['d' => 'now'], WithPrivateConstructor::class, ['public set']);
         self::assertNotNull($object);
-        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private', true)->getValue($object));
-        self::assertSame('public set', $this->getProperty($object, 'public', true)->getValue($object));
-        self::assertSame(2, $this->getProperty($object, 'protected', true)->getValue($object));
+        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'private')->getValue($object));
+        self::assertSame('public set', $this->getProperty($object, 'public')->getValue($object));
+        self::assertSame(2, $this->getProperty($object, 'protected')->getValue($object));
 
         $object = $this->SQLite->fetchObject('select date(:d, "localtime") as `public`, "protected" as protected', ['d' => 'now'], WithPrivateConstructor::class);
         self::assertNotNull($object);
-        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'public', true)->getValue($object));
-        self::assertSame('protected', $this->getProperty($object, 'protected', true)->getValue($object));
-        self::assertSame(3, $this->getProperty($object, 'private', true)->getValue($object));
+        self::assertSame(date('Y-m-d'), $this->getProperty($object, 'public')->getValue($object));
+        self::assertSame('protected', $this->getProperty($object, 'protected')->getValue($object));
+        self::assertSame(3, $this->getProperty($object, 'private')->getValue($object));
     }
 
     #[Test]
     public function it_should_fetch_object_of_abstract_class(): void
     {
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
 
@@ -129,7 +129,7 @@ final class QueryTraitTest extends TestCase
     public function it_should_fetch_object_of_class_with_no_constructor(): void
     {
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
 
@@ -160,16 +160,16 @@ final class QueryTraitTest extends TestCase
     public function it_should_fetch_pair(): void
     {
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
         $table->push(['id' => 2]);
 
         self::assertSame(['1' => 'foobar'], $this->SQLite->fetchPair('select 1, "foobar"'));
         self::assertSame(['1' => null], $this->SQLite->fetchPair('select 1'));
-        self::assertSame([null => 1], $this->SQLite->fetchPair('select null, 1'));
-        self::assertSame([null => null], $this->SQLite->fetchPair('select null, null'));
-        self::assertSame([null => null], $this->SQLite->fetchPair('select null'));
+        self::assertSame(['' => 1], $this->SQLite->fetchPair('select null, 1'));
+        self::assertSame(['' => null], $this->SQLite->fetchPair('select null, null'));
+        self::assertSame(['' => null], $this->SQLite->fetchPair('select null'));
 
         self::assertSame([], $this->SQLite->fetchPair('select 1 where 1 = 2'));
         self::assertSame([], $this->SQLite->fetchPairs('select 1 where 1 = 2'));
@@ -185,7 +185,7 @@ final class QueryTraitTest extends TestCase
         self::assertNull($this->SQLite->fetchOne('select * from sqlite_master'));
 
         $table = __METHOD__;
-        $table = $this->SQLite->{$table};
+        $table = $this->SQLite->getTable($table);
 
         self::assertSame(0, $this->SQLite->changes());
 

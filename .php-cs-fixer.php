@@ -29,11 +29,13 @@ $config
         'yoda_style'       => false,
         'phpdoc_summary'   => false,
         'phpdoc_line_span' => [
+            'class'    => 'single',
+            'const'    => 'single',
             'method'   => 'single',
             'property' => 'single',
         ],
         'global_namespace_import'     => ['import_classes' => true],
-        'phpdoc_to_comment'           => false,
+        'phpdoc_to_comment'           => true,
         'class_attributes_separation' => ['elements' => ['property' => 'none']],
         'phpdoc_tag_type'             => false,
         'binary_operator_spaces'      => [

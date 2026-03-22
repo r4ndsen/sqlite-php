@@ -33,7 +33,7 @@ final class Pragma implements Constant
         );
     }
 
-    /** we need to actually load it to make sure it hasn't been changed by outside logic in the meantime. */
+    // Load it to make sure it hasn't been changed externally.
     public function __isset(string $key): bool
     {
         return $this->__get($key) !== null;
@@ -67,11 +67,11 @@ final class Pragma implements Constant
 
     public function getCacheSize(): int
     {
-        // @phpstan-ignore cast.int
+        /** @phpstan-ignore cast.int */
         return (int) $this->__get(Constant::CACHE_SIZE);
     }
 
-    /** returns a list of attached databases. */
+    // Returns a list of attached databases.
     public function getDatabaseList(): array
     {
         return $this->fetchObjects('pragma database_list');
@@ -100,7 +100,7 @@ final class Pragma implements Constant
 
     public function getPageSize(): int
     {
-        // @phpstan-ignore cast.int
+        /** @phpstan-ignore cast.int */
         return (int) $this->__get(Constant::PAGE_SIZE);
     }
 
@@ -114,7 +114,7 @@ final class Pragma implements Constant
     /** @return ColumnSchema[] */
     public function getTableColumnSchemas(Table $table): array
     {
-        // @phpstan-ignore return.type
+        /** @phpstan-ignore return.type */
         return $this->fetchInstances(
             sql: sprintf('pragma table_info(%s)', $table),
             class: ColumnSchema::class
@@ -137,14 +137,14 @@ final class Pragma implements Constant
     /** @see https://www.sqlite.org/pragma.html#pragma_integrity_check */
     public function integrityCheck(): ?string
     {
-        // @phpstan-ignore return.type
+        /** @phpstan-ignore return.type */
         return $this->__get(Constant::INTEGRITY_CHECK) ?: null;
     }
 
     /** @see https://www.sqlite.org/pragma.html#pragma_quick_check */
     public function quickCheck(): ?string
     {
-        // @phpstan-ignore return.type
+        /** @phpstan-ignore return.type */
         return $this->__get(Constant::QUICK_CHECK) ?: null;
     }
 

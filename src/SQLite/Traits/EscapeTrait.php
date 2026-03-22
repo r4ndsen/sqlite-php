@@ -13,13 +13,13 @@ trait EscapeTrait
         return self::backtickString($string);
     }
 
-    /** Backticks an identifier and escapes it */
+    // Backticks an identifier and escapes it
     public static function backtickIdentifier(string $identifier): string
     {
         return self::backtickString(self::escapeIdentifier($identifier));
     }
 
-    /** Backticks a value */
+    // Backticks a value
     public static function backtickString(string $string): string
     {
         return sprintf('`%s`', $string);
@@ -30,13 +30,13 @@ trait EscapeTrait
         return self::escapeString($string);
     }
 
-    /** Escape column and or table names used in statements */
+    // Escape column and or table names used in statements
     public static function escapeIdentifier(string $identifier): string
     {
         return str_replace('`', '``', $identifier);
     }
 
-    /** Alias of escape() */
+    // Alias of escape()
     public static function escapeString(string $string): string
     {
         return SQLite3::escapeString($string);

@@ -63,14 +63,14 @@ column helpers, pragmas, and query convenience methods.
 
 ## Development tooling
 
-All make targets run from the project root:
+All `just` recipes run from the project root (install `just` from https://github.com/casey/just):
 
 ```bash
-make test        # PHPUnit against the current PHP version
-make tests       # PHPUnit against the Docker matrix (PHP 8.2–8.5)
-make coverage    # Generates HTML coverage and prints the report path
-make infection   # Mutation testing (requires Xdebug)
-make stan        # PHPStan static analysis
+just test        # PHPUnit against the current PHP version
+just tests       # PHPUnit against the Docker matrix (PHP 8.2–8.5)
+just coverage    # Generates HTML coverage and prints the report path
+just infection   # Mutation testing (requires Xdebug)
+just stan        # PHPStan static analysis
 ```
 
 ## License

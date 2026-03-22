@@ -16,31 +16,31 @@ This is `r4ndsen/sqlite-php`, a high-level PHP library providing batteries-inclu
 ### Primary Development Workflow
 ```bash
 # Run all quality checks and tests (recommended for pre-commit)
-make all
+just all
 
 # Individual commands
-make test        # PHPUnit with current PHP version
-make coverage    # Generate HTML coverage report
-make stan        # PHPStan static analysis
-make csfix       # Apply PHP-CS-Fixer formatting
-make csdiff      # Show formatting differences without applying
+just test        # PHPUnit with current PHP version
+just coverage    # Generate HTML coverage report
+just stan        # PHPStan static analysis
+just csfix       # Apply PHP-CS-Fixer formatting
+just csdiff      # Show formatting differences without applying
 ```
 
 ### Testing Across PHP Versions
 ```bash
-make tests       # Run tests against Docker matrix (PHP 8.2-8.5)
-make test82      # Test specifically on PHP 8.2
-make test83      # Test specifically on PHP 8.3
-make test84      # Test specifically on PHP 8.4
-make test85      # Test specifically on PHP 8.5
+just tests       # Run tests against Docker matrix (PHP 8.2-8.5)
+just test82      # Test specifically on PHP 8.2
+just test83      # Test specifically on PHP 8.3
+just test84      # Test specifically on PHP 8.4
+just test85      # Test specifically on PHP 8.5
 ```
 
 ### Additional Quality Tools
 ```bash
-make infection   # Mutation testing (requires Xdebug)
-make bench       # Performance benchmarks
-make rector      # Code refactoring with Rector
-make testdox     # Human-readable test output
+just infection   # Mutation testing (requires Xdebug)
+just bench       # Performance benchmarks
+just rector      # Code refactoring with Rector
+just testdox     # Human-readable test output
 ```
 
 ### Direct Tool Access
