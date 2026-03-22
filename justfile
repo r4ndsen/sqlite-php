@@ -1,4 +1,5 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
+set quiet := true
 
 phpunit := "vendor/bin/phpunit"
 php_cs_fixer := "vendor/bin/php-cs-fixer"
@@ -9,7 +10,7 @@ rector := "vendor/bin/rector"
 docker_compose := "docker-compose"
 
 default:
-    @just --list
+    just --list
 
 all: csfix test coverage stan
 
@@ -36,7 +37,7 @@ infection:
     printf 'Infection report: %s\n' ./build/infection.html
 
 coverage:
-    mkdir -p build
+    mkdir -p ./build
     XDEBUG_MODE=coverage {{phpunit}} --coverage-html ./build/coverage
     printf 'Coverage report: %s\n' ./build/coverage/index.html
 
