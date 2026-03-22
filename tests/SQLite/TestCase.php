@@ -51,9 +51,6 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 
     public function invokeArgs(object $object, string $method, array $args = []): mixed
     {
-        return $this
-            ->getMethod($object, $method, true)
-            ->invokeArgs($object, $args)
-        ;
+        return $this->getMethod($object, $method)->invokeArgs($object, $args);
     }
 }

@@ -35,7 +35,7 @@ $config
             'property' => 'single',
         ],
         'global_namespace_import'     => ['import_classes' => true],
-        'phpdoc_to_comment'           => true,
+        'phpdoc_to_comment'           => false,
         'class_attributes_separation' => ['elements' => ['property' => 'none']],
         'phpdoc_tag_type'             => false,
         'binary_operator_spaces'      => [

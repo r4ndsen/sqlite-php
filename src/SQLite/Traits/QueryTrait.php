@@ -349,9 +349,7 @@ trait QueryTrait
         try {
             while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
                 $key = $row[0] ?? '';
-                if ($key === null) {
-                    $key = '';
-                } elseif (!\is_int($key) && !\is_string($key)) {
+                if (!\is_int($key) && !\is_string($key)) {
                     $key = (string) $key;
                 }
 
