@@ -135,6 +135,8 @@ final class QueryTraitTest extends TestCase
 
         $object = $this->SQLite->fetchObject('select "foo" as id', [], WithNoConstructor::class);
         self::assertInstanceOf(WithNoConstructor::class, $object);
+        self::assertObjectHasProperty('id', $object);
+
         self::assertSame('foo', $object->id);
     }
 
@@ -166,10 +168,13 @@ final class QueryTraitTest extends TestCase
         $table->push(['id' => 2]);
 
         self::assertSame(['1' => 'foobar'], $this->SQLite->fetchPair('select 1, "foobar"'));
+        self::assertSame(['1.1' => 'foobar'], $this->SQLite->fetchPair('select 1.1, "foobar"'));
         self::assertSame(['1' => null], $this->SQLite->fetchPair('select 1'));
         self::assertSame(['' => 1], $this->SQLite->fetchPair('select null, 1'));
         self::assertSame(['' => null], $this->SQLite->fetchPair('select null, null'));
         self::assertSame(['' => null], $this->SQLite->fetchPair('select null'));
+
+        self::assertSame(['1.1' => 'foobar', '2.2' => 'baz'], $this->SQLite->fetchPairs('select 1.1, "foobar" union all select 2.2, "baz"'));
 
         self::assertSame([], $this->SQLite->fetchPair('select 1 where 1 = 2'));
         self::assertSame([], $this->SQLite->fetchPairs('select 1 where 1 = 2'));

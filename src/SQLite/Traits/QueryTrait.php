@@ -129,23 +129,12 @@ trait QueryTrait
      */
     public function fetchPair(string $sql, array $bind = []): array
     {
-        $result = $this->perform($sql, $bind);
-
-        try {
-            $row = $result->fetchArray(SQLITE3_NUM);
-            if ($row === false) {
-                return [];
-            }
-
-            $key = $row[0] ?? '';
-            if (!\is_int($key) && !\is_string($key)) {
-                $key = (string) $key;
-            }
-
-            return [$key => $row[1] ?? null];
-        } finally {
-            $result->finalize();
+        foreach ($this->yieldPairs($sql, $bind) as $key => $value) {
+            /** @var int|string $key */
+            return [$key => $value];
         }
+
+        return [];
     }
 
     /**
@@ -155,24 +144,7 @@ trait QueryTrait
      */
     public function fetchPairs(string $sql, array $bind = []): array
     {
-        $result = $this->perform($sql, $bind);
-
-        try {
-            $pairs = [];
-
-            while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
-                $key = $row[0] ?? '';
-                if (!\is_int($key) && !\is_string($key)) {
-                    $key = (string) $key;
-                }
-
-                $pairs[$key] = $row[1] ?? null;
-            }
-
-            return $pairs;
-        } finally {
-            $result->finalize();
-        }
+        return iterator_to_array($this->yieldPairs($sql, $bind));
     }
 
     public function fetchPlain(string $sql, array $bind = []): array
@@ -325,7 +297,7 @@ trait QueryTrait
                 } else {
                     try {
                         /** @phpstan-ignore argument.type */
-                        set_error_handler(static fn () => null, E_DEPRECATED);
+                        set_error_handler(static fn () => true, E_DEPRECATED);
                         $object->{$key} = $value;
                     } finally {
                         restore_error_handler();
