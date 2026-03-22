@@ -185,6 +185,26 @@ final class QueryTraitTest extends TestCase
     }
 
     #[Test]
+    public function it_should_fetch_pairs_from_two_columns(): void
+    {
+        $table = __METHOD__;
+        $table = $this->SQLite->getTable($table);
+        self::assertTrue($table
+            ->addCreateColumn(Column::createTextColumn('name'))
+            ->addCreateColumn(Column::createIntegerColumn('value'))
+            ->create());
+
+        $table->push(['name' => 'one', 'value' => 1]);
+        $table->push(['name' => 'two', 'value' => 2]);
+        $table->push(['name' => 'three', 'value' => 3]);
+
+        self::assertSame(
+            ['one' => 1, 'two' => 2, 'three' => 3],
+            $this->SQLite->fetchPairs('select name, value from ' . $this->backtick(__METHOD__) . ' order by value')
+        );
+    }
+
+    #[Test]
     public function it_should_fetch_value(): void
     {
         self::assertNull($this->SQLite->fetchOne('select * from sqlite_master'));

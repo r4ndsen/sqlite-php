@@ -11,9 +11,10 @@ phpbench.json        export-ignore
 phpstan.neon.dist    export-ignore
 phpunit.xml          export-ignore
 psalm.xml.dist       export-ignore
-Makefile             export-ignore
+justfile             export-ignore
 rector.php           export-ignore
 build/               export-ignore
+docs/                export-ignore
 CHANGELOG.md         export-ignore
 AGENTS.md            export-ignore
 WARP.md              export-ignore
