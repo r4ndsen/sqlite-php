@@ -19,37 +19,26 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         $this->SQLite = new class extends SQLite {};
     }
 
-    public function getMethod(object $object, string $methodName, ?bool $setAccessible = null): ReflectionMethod
+    public function getMethod(object $object, string $methodName): ReflectionMethod
     {
-        $reflection = $this->getReflection($object);
-        $method = $reflection->getMethod($methodName);
-        if (isset($setAccessible)) {
-            $method->setAccessible($setAccessible);
-        }
-
-        return $method;
+        return $this->getReflection($object)->getMethod($methodName);
     }
 
-    public function getProperty(object $object, string $propertyName, ?bool $setAccessible = null): ReflectionProperty
+    public function getProperty(object $object, string $propertyName): ReflectionProperty
     {
         $reflection = $this->getReflection($object);
 
         if ($reflection->hasProperty($propertyName)) {
-            $property = $reflection->getProperty($propertyName);
-            if ($setAccessible !== null) {
-                $property->setAccessible($setAccessible);
-            }
-        } else {
-            $property = new ReflectionProperty($object, $propertyName);
+            return $reflection->getProperty($propertyName);
         }
 
-        return $property;
+        return new ReflectionProperty($object, $propertyName);
     }
 
     public function getPropertyValue(object $object, string $propertyName): mixed
     {
         return $this
-            ->getProperty($object, $propertyName, true)
+            ->getProperty($object, $propertyName)
             ->getValue($object)
         ;
     }
@@ -62,9 +51,6 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 
     public function invokeArgs(object $object, string $method, array $args = []): mixed
     {
-        return $this
-            ->getMethod($object, $method, true)
-            ->invokeArgs($object, $args)
-        ;
+        return $this->getMethod($object, $method)->invokeArgs($object, $args);
     }
 }

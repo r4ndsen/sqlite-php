@@ -7,7 +7,7 @@ namespace r4ndsen\SQLite\Table\TableFactory;
 use r4ndsen\SQLite\Connection;
 use r4ndsen\SQLite\Table;
 
-class DefaultTableFactory implements TableFactoryInterface
+class DefaultTableFactory implements TableFactory
 {
     /** @var array<string, Table> */
     private array $tables = [];

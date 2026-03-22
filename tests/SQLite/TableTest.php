@@ -282,7 +282,7 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_create_allow_transaction(): void
     {
-        $t = $this->SQLite->table;
+        $t = $this->SQLite->getTable('table');
 
         self::assertFalse($this->getPropertyValue($t, 'withTransaction'));
 
@@ -388,7 +388,7 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_drop_table(): void
     {
-        self::assertTrue($this->SQLite->table->drop());
+        self::assertTrue($this->SQLite->getTable('table')->drop());
     }
 
     #[Test]
@@ -482,16 +482,18 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_table_general_methods(): void
     {
-        self::assertInstanceOf(Table::class, $this->SQLite->table);
-        self::assertSame('table', $this->SQLite->table->getName());
-        self::assertFalse($this->SQLite->table->exists());
-        self::assertCount(0, $this->SQLite->table);
-        self::assertSame(0, $this->SQLite->table->maxRow());
-        self::assertSame([], $this->SQLite->table->columns());
-        self::assertSame([], $this->invokeArgs($this->SQLite->table, 'schema', []));
-        self::assertNull($this->SQLite->table->getColumnByName('test'));
-        self::assertNull($this->SQLite->table->getColumnByColumnId(0));
-        self::assertTrue($this->SQLite->table->drop());
+        $tableName = 'table';
+        $table = $this->SQLite->getTable($tableName);
+
+        self::assertSame('table', $table->getName());
+        self::assertFalse($table->exists());
+        self::assertCount(0, $table);
+        self::assertSame(0, $table->maxRow());
+        self::assertSame([], $table->columns());
+        self::assertSame([], $this->invokeArgs($table, 'schema'));
+        self::assertNull($table->getColumnByName('test'));
+        self::assertNull($table->getColumnByColumnId(0));
+        self::assertTrue($table->drop());
     }
 
     #[Test]

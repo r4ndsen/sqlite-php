@@ -11,7 +11,7 @@ trait ExtensionTrait
     /** @return callable-string|callable */
     public function getCallback(): callable
     {
-        // @phpstan-ignore return.type
+        /** @phpstan-ignore return.type */
         return $this->identifier;
     }
 

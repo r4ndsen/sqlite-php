@@ -29,6 +29,8 @@ $config
         'yoda_style'       => false,
         'phpdoc_summary'   => false,
         'phpdoc_line_span' => [
+            'class'    => 'single',
+            'const'    => 'single',
             'method'   => 'single',
             'property' => 'single',
         ],

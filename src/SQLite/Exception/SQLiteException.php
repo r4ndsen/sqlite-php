@@ -14,7 +14,7 @@ class SQLiteException extends RuntimeException
 
     public static function from(Throwable $exception): static
     {
-        // @phpstan-ignore new.static
+        /** @phpstan-ignore new.static */
         return new static($exception->getMessage(), $exception->getCode(), $exception);
     }
 }

@@ -24,7 +24,7 @@ class DynamicInsert extends Table
      */
     protected ?array $columnCaseMap = null;
 
-    /** Associative array of column names in order of creation */
+    // Associative array of column names in order of creation
     protected array $pushData = [];
 
     /**
@@ -35,7 +35,7 @@ class DynamicInsert extends Table
 
     protected bool $withTransaction = true;
 
-    /** Enhances performance massively (500% and more) */
+    // Enhances performance massively (500% and more)
     public function deleteColumn(Column $column): bool
     {
         try {
@@ -104,7 +104,7 @@ class DynamicInsert extends Table
         $pushData = $this->pushData;
 
         foreach ($rawData as $columnName => $value) {
-            // @phpstan-ignore offsetAccess.notFound
+            /** @phpstan-ignore offsetAccess.notFound */
             $columnName = $this->columnCaseMap[(string) $columnName];
             $pushData[$columnName] = $value;
         }
@@ -126,7 +126,7 @@ class DynamicInsert extends Table
         return $this->columnCaseMap ?? [];
     }
 
-    /** Prepares the pushData array with their default values in order */
+    // Prepares the pushData array with their default values in order
     protected function initializePushData(): void
     {
         $this->pushData = [];

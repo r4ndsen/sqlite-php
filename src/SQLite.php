@@ -15,7 +15,7 @@ use r4ndsen\SQLite\Extensions\Functions;
 use r4ndsen\SQLite\Pragma;
 use r4ndsen\SQLite\Table;
 use r4ndsen\SQLite\Table\TableFactory\DefaultTableFactory;
-use r4ndsen\SQLite\Table\TableFactory\TableFactoryInterface;
+use r4ndsen\SQLite\Table\TableFactory\TableFactory;
 use r4ndsen\SQLite\Traits\PragmaTrait;
 use r4ndsen\SQLite\Traits\QueryTrait;
 use ReflectionException;
@@ -26,7 +26,7 @@ class SQLite
     use QueryTrait;
 
     private ?AttachmentHandler $attachmentHandler = null;
-    private ?TableFactoryInterface $tableFactory = null;
+    private ?TableFactory $tableFactory = null;
 
     public function __construct(
         public readonly string $path = ':memory:',
@@ -104,7 +104,7 @@ class SQLite
         $this->attachmentHandler = null;
     }
 
-    public function setTableFactory(TableFactoryInterface $tableFactory): self
+    public function setTableFactory(TableFactory $tableFactory): self
     {
         $this->tableFactory = $tableFactory;
 
@@ -143,7 +143,7 @@ class SQLite
         return $this->attachmentHandler ??= new AttachmentHandler($this->conn);
     }
 
-    private function getTableFactory(): TableFactoryInterface
+    private function getTableFactory(): TableFactory
     {
         return $this->tableFactory ??= new DefaultTableFactory($this->conn);
     }

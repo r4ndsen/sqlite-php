@@ -8,21 +8,19 @@ use BadMethodCallException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 use Stringable;
 
-final class Column implements CreateColumnInterface, Stringable
+final class Column implements CreateColumn, Stringable
 {
     use EscapeTrait;
 
     public const NOT_NULL = 'NOT NULL';
     public const ROWID = 'rowid';
 
-    /** Column id, will be populated by the table the column is placed in */
+    // Column id, will be populated by the table the column is placed in
     private int $columnId;
+    private ?string $defaultValue = null;
 
-    private ?string $defaultValue;
-
-    /** Primary key flag, will be populated by the table the column is placed in */
+    // Primary key flag, will be populated by the table the column is placed in
     private bool $isPrimaryKey;
-
     private ?string $maybeNull = null;
 
     public function __construct(

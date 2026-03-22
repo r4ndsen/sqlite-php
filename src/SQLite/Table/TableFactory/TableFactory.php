@@ -6,7 +6,7 @@ namespace r4ndsen\SQLite\Table\TableFactory;
 
 use r4ndsen\SQLite\Table;
 
-interface TableFactoryInterface
+interface TableFactory
 {
     public function loadTable(string $tableName): Table;
 

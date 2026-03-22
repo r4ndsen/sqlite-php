@@ -7,7 +7,7 @@ namespace r4ndsen\SQLite;
 use InvalidArgumentException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 
-final class TableConstraint implements CreateColumnInterface
+final class TableConstraint implements CreateColumn
 {
     use EscapeTrait;
 

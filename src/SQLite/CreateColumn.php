@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
-interface CreateColumnInterface
+interface CreateColumn
 {
     public function getCreateStatement(): string;
 }

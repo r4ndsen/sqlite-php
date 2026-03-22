@@ -162,7 +162,7 @@ final class PreparedStatement
     private function executeStatement(): SQLite3Result
     {
         try {
-            // @phpstan-ignore return.type
+            /** @phpstan-ignore return.type */
             return $this->getStatement()->execute();
         } catch (SQLiteException $e) {
             throw $e;
@@ -171,7 +171,7 @@ final class PreparedStatement
         }
     }
 
-    /** Initializes and returns the sqlite statement */
+    // Initializes and returns the sqlite statement
     private function getStatement(): SQLite3Stmt
     {
         return $this->stm ??= $this->conn->prepare($this->sql);
