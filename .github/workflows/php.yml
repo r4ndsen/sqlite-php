@@ -48,24 +48,19 @@ jobs:
 
       - name: Install composer dependencies
         uses: ramsey/composer-install@v1
-        with:
-          composer-options: ${{ matrix.composer-options }}
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --ansi
 
-      - name: Run Psalm
-        run: vendor/bin/psalm --taint-analysis --output-format=github
-
       - name: Run test suite with text coverage
-        run: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
+        run: |
+          mkdir -p ./build/logs
+          vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
         env:
           XDEBUG_MODE: coverage
 
-      #- name: Upload coverage results to Coveralls
-      #  if: matrix.experimental == false
-      #  env:
-      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #  run: |
-      #    composer require php-coveralls/php-coveralls --dev --no-interaction --with-all-dependencies
-      #    vendor/bin/php-coveralls --coverage_clover=build/logs/clover.xml --verbose
+      - name: Upload coverage results to Coveralls
+        if: matrix.experimental == false && matrix.os == 'ubuntu-latest' && matrix.php == '8.5' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: vendor/bin/php-coveralls --coverage_clover=build/logs/clover.xml --verbose

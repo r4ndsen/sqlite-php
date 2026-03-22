@@ -41,6 +41,10 @@ coverage:
     XDEBUG_MODE=coverage {{phpunit}} --coverage-html ./build/coverage
     printf 'Coverage report: %s\n' ./build/coverage/index.html
 
+clover:
+    mkdir -p ./build/logs
+    XDEBUG_MODE=coverage {{phpunit}} --coverage-clover build/logs/clover.xml
+
 stan:
     {{phpstan}} analyze --memory-limit 2G
 
