@@ -11,8 +11,8 @@ final class Column implements CreateColumn, Stringable
 {
     use EscapeTrait;
 
-    public const NOT_NULL = 'NOT NULL';
-    public const ROWID = 'rowid';
+    public const string NOT_NULL = 'NOT NULL';
+    public const string ROWID = 'rowid';
 
     // Column id, will be populated by the table the column is placed in
     private int $columnId;

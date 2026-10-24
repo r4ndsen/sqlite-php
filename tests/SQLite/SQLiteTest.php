@@ -14,7 +14,7 @@ use SQLite3;
 
 final class SQLiteTest extends TestCase
 {
-    private const FIXTURES_DIR = __DIR__ . '/../fixtures';
+    private const string FIXTURES_DIR = __DIR__ . '/../fixtures';
 
     #[Test]
     public function it_should_check_pragma_with_isset_case_insensitively(): void

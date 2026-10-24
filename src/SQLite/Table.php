@@ -32,7 +32,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     use Traits\QueryTrait;
 
     // Upper limit of insert statements kept prepared at the same time
-    private const MAX_PREPARED_STATEMENTS = 100;
+    private const int MAX_PREPARED_STATEMENTS = 100;
 
     protected ColumnFactoryInterface $columnFactory;
 
@@ -354,15 +354,13 @@ class Table implements Countable, IteratorAggregate, Stringable
     {
         $key = \count($data);
 
-        if (!isset($this->preparedStatements[$key])) {
-            $this->preparedStatements[$key] = $this->prepareInsert(
-                sprintf(
-                    'insert into %s values (%s)',
-                    $this,
-                    rtrim(str_repeat('?,', $key), ',')
-                )
-            );
-        }
+        $this->preparedStatements[$key] ??= $this->prepareInsert(
+            sprintf(
+                'insert into %s values (%s)',
+                $this,
+                rtrim(str_repeat('?,', $key), ',')
+            )
+        );
 
         $this->preparedStatements[$key]->bind($data);
 

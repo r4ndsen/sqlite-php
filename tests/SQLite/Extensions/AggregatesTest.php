@@ -124,8 +124,8 @@ final class AggregatesTest extends TestCase
 
         $identifier = str_repeat(' ', 3);
 
-        $failingAggregate = new class($identifier) implements AggregateInterface {
-            public function __construct(private readonly string $identifier)
+        $failingAggregate = new readonly class($identifier) implements AggregateInterface {
+            public function __construct(private string $identifier)
             {
             }
 

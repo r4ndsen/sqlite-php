@@ -11,8 +11,8 @@ final class TableConstraint implements CreateColumn
 {
     use EscapeTrait;
 
-    public const PRIMARY_KEY = 'primary key';
-    public const UNIQUE = 'unique';
+    public const string PRIMARY_KEY = 'primary key';
+    public const string UNIQUE = 'unique';
 
     public ?OnConflict $onConflict = null;
 

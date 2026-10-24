@@ -26,8 +26,5 @@ parameters:
 			path: tests/SQLite/Traits/QueryTraitTest.php
 			identifier: property.onlyWritten
 		-
-			path: tests/SQLite/Traits/QueryTraitTest.php
-			identifier: identical.alwaysTrue
-		-
 		    path: src/SQLite/Pragma.php
 		    identifier: argument.type

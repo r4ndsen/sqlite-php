@@ -136,8 +136,8 @@ final class CollationsTest extends TestCase
 
         $identifier = str_repeat(' ', 2);
 
-        $failingCollation = new class($identifier) implements CollationInterface {
-            public function __construct(private readonly string $identifier)
+        $failingCollation = new readonly class($identifier) implements CollationInterface {
+            public function __construct(private string $identifier)
             {
             }
 
@@ -162,13 +162,13 @@ final class CollationsTest extends TestCase
     public function it_should_sort_order_on_strings_and_ints_with_natural_sorting(): void
     {
         self::assertSame(
-            array_map('strval', $this->SQLite->fetchCol('select id from data2 order by id collate NATURAL_CMP')),
-            array_map('strval', $this->SQLite->fetchCol('select id from data3 order by id collate NATURAL_CMP'))
+            array_map(strval(...), $this->SQLite->fetchCol('select id from data2 order by id collate NATURAL_CMP')),
+            array_map(strval(...), $this->SQLite->fetchCol('select id from data3 order by id collate NATURAL_CMP'))
         );
 
         self::assertSame(
-            array_map('intval', $this->SQLite->fetchCol('select id from data2 order by id collate NATURAL_CMP')),
-            array_map('intval', $this->SQLite->fetchCol('select id from data3 order by id collate NATURAL_CMP'))
+            array_map(intval(...), $this->SQLite->fetchCol('select id from data2 order by id collate NATURAL_CMP')),
+            array_map(intval(...), $this->SQLite->fetchCol('select id from data3 order by id collate NATURAL_CMP'))
         );
     }
 
@@ -176,13 +176,13 @@ final class CollationsTest extends TestCase
     public function it_should_sort_order_on_strings_and_ints_with_numerical_sorting(): void
     {
         self::assertSame(
-            array_map('strval', $this->SQLite->fetchCol('select id from data2 order by id collate NUMERICAL_CMP')),
-            array_map('strval', $this->SQLite->fetchCol('select id from data3 order by id collate NUMERICAL_CMP'))
+            array_map(strval(...), $this->SQLite->fetchCol('select id from data2 order by id collate NUMERICAL_CMP')),
+            array_map(strval(...), $this->SQLite->fetchCol('select id from data3 order by id collate NUMERICAL_CMP'))
         );
 
         self::assertSame(
-            array_map('intval', $this->SQLite->fetchCol('select id from data2 order by id collate NUMERICAL_CMP')),
-            array_map('intval', $this->SQLite->fetchCol('select id from data3 order by id collate NUMERICAL_CMP'))
+            array_map(intval(...), $this->SQLite->fetchCol('select id from data2 order by id collate NUMERICAL_CMP')),
+            array_map(intval(...), $this->SQLite->fetchCol('select id from data3 order by id collate NUMERICAL_CMP'))
         );
     }
 

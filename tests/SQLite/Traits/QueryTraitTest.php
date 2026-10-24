@@ -281,11 +281,7 @@ final class QueryTraitTest extends TestCase
     public function it_should_query_single_exception(): void
     {
         $this->expectException(QueryException::class);
-        if ((PHP_MAJOR_VERSION === 8) && (PHP_MINOR_VERSION === 2)) {
-            $this->expectExceptionMessage('Unable to prepare statement: 1, near "foo": syntax error');
-        } else {
-            $this->expectExceptionMessage('Unable to prepare statement: near "foo": syntax error');
-        }
+        $this->expectExceptionMessage('Unable to prepare statement: near "foo": syntax error');
 
         $this->SQLite->querySingle('foo');
     }
