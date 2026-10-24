@@ -24,18 +24,9 @@ class DynamicInsert extends Table
      */
     protected ?array $columnCaseMap = null;
 
-    // Associative array of column names in order of creation
-    protected array $pushData = [];
-
-    /**
-     * Indicates that you want to populate the rowid
-     * instead of letting it auto increment.
-     */
-    protected bool $withRowid = false;
-
+    // Enhances performance massively (500% and more)
     protected bool $withTransaction = true;
 
-    // Enhances performance massively (500% and more)
     public function deleteColumn(Column $column): bool
     {
         try {
@@ -69,25 +60,17 @@ class DynamicInsert extends Table
         foreach (array_keys($data) as $columnName) {
             $columnName = (string) $columnName;
 
-            if ($this->isKnownColumn($columnName) === false) {
-                if ($this->columnExists($columnName) === false) {
-                    $this->addColumn($this->getColumnFactory()->createColumn($columnName));
-                    $this->seenColumn($columnName);
+            if ($this->isKnownColumn($columnName) === false && $this->columnExists($columnName) === false) {
+                $column = $this->getColumnFactory()->createColumn($columnName);
+                $this->addColumn($column);
 
-                    // re-initialize the prepared statement
-                    $this->preparedStatement = null;
-                }
-            } elseif ($this->withRowid === false && $columnName === Column::ROWID) {
-                $this->withRowid = true;
-                $this->preparedStatement = null;
+                // the column is created with its trimmed name
+                $this->seenColumn($column->getTrimmed());
+                $this->seenColumn($columnName);
             }
         }
 
-        if ($this->preparedStatement === null) {
-            $this->initializePushData();
-        }
-
-        return parent::push($this->combineData($data));
+        return $this->insertRow($this->combineData($data));
     }
 
     public function renameColumn(Column $from, Column $to): bool
@@ -99,17 +82,18 @@ class DynamicInsert extends Table
         }
     }
 
+    /**
+     * Maps the keys of the row to the real column names.
+     * Columns missing in the row are left out, so SQLite applies their default value.
+     */
     protected function combineData(array $rawData): array
     {
-        $pushData = $this->pushData;
-
+        $row = [];
         foreach ($rawData as $columnName => $value) {
-            /** @phpstan-ignore offsetAccess.notFound */
-            $columnName = $this->columnCaseMap[(string) $columnName];
-            $pushData[$columnName] = $value;
+            $row[$this->columnCaseMap[$columnName] ?? $columnName] = $value;
         }
 
-        return $pushData;
+        return $row;
     }
 
     /** @return array<string, string> */
@@ -126,18 +110,10 @@ class DynamicInsert extends Table
         return $this->columnCaseMap ?? [];
     }
 
-    // Prepares the pushData array with their default values in order
-    protected function initializePushData(): void
+    /** @throws SQLiteException */
+    protected function insertRow(array $row): static
     {
-        $this->pushData = [];
-
-        if ($this->withRowid) {
-            $this->pushData[Column::ROWID] = null;
-        }
-
-        foreach ($this->columns() as $column) {
-            $this->pushData[$column->getRaw()] = $column->getDefaultValue();
-        }
+        return $this->insert(array_keys($row), array_values($row));
     }
 
     protected function isKnownColumn(string $columnName): bool
@@ -167,9 +143,7 @@ class DynamicInsert extends Table
     protected function reset(): void
     {
         $this->columnCaseMap = null;
-        $this->preparedStatement = null;
-        $this->pushData = [];
-        $this->withRowid = false;
+        $this->commit();
     }
 
     /**

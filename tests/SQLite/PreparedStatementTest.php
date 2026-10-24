@@ -119,8 +119,9 @@ final class PreparedStatementTest extends TestCase
         $table->push(['title' => 'foo']);
         $table->push(['title' => 'bar']);
 
+        // the table was created, but all rows are still part of the open transaction
         $sqlite = new SQLite($path);
-        self::assertCount(1, $sqlite->test);
+        self::assertCount(0, $sqlite->test);
     }
 
     #[Test]

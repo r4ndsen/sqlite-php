@@ -386,6 +386,29 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_push_rows_by_column_name(): void
+    {
+        $this->SQLite->exec('create table t (a, b)');
+        $t = $this->SQLite->getTable('t');
+
+        $t->push(['a' => 1, 'b' => 2])
+            ->push([3, 4])
+            ->push(['b' => 5, 'a' => 6])
+            ->push([7, 8])
+            ->push(['b' => 9])
+            ->commit()
+        ;
+
+        self::assertSame([
+            ['a' => 1, 'b' => 2],
+            ['a' => 3, 'b' => 4],
+            ['a' => 6, 'b' => 5],
+            ['a' => 8, 'b' => 7],
+            ['a' => null, 'b' => 9],
+        ], $t->toArray());
+    }
+
+    #[Test]
     public function it_should_drop_table(): void
     {
         self::assertTrue($this->SQLite->getTable('table')->drop());

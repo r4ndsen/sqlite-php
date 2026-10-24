@@ -30,6 +30,9 @@ class Table implements Countable, IteratorAggregate, Stringable
     use Traits\PragmaTrait;
     use Traits\QueryTrait;
 
+    // Upper limit of insert statements kept prepared at the same time
+    private const MAX_PREPARED_STATEMENTS = 100;
+
     protected ColumnFactoryInterface $columnFactory;
 
     /**
@@ -53,8 +56,23 @@ class Table implements Countable, IteratorAggregate, Stringable
      */
     protected array $createConstraints = [];
 
-    // Utilized by the push() method
-    protected ?PreparedStatement $preparedStatement = null;
+    /**
+     * Prepared insert statements by their column list, utilized by push() and pushWithoutKeys().
+     *
+     * @var array<string, PreparedStatement>
+     */
+    protected array $preparedStatements = [];
+
+    /**
+     * Columns of the last row passed to push(), rows without keys are bound in this order.
+     *
+     * @var list<int|string>
+     */
+    protected array $pushColumns = [];
+
+    /** @var list<int|string> */
+    private array $lastInsertColumns = [];
+    private string $lastInsertKey = '';
 
     // Indicate whether to use transactions for prepared statements
     protected bool $withTransaction = false;
@@ -127,7 +145,12 @@ class Table implements Countable, IteratorAggregate, Stringable
 
     public function commit(): static
     {
-        $this->preparedStatement = null;
+        foreach ($this->preparedStatements as $preparedStatement) {
+            $preparedStatement->commit();
+        }
+
+        $this->preparedStatements = [];
+        $this->pushColumns = [];
 
         return $this;
     }
@@ -307,52 +330,47 @@ class Table implements Countable, IteratorAggregate, Stringable
         }
     }
 
-    /** @throws SQLiteException */
+    /**
+     * Inserts a row, the keys are the column names.
+     * A row without keys is bound in the column order of the row pushed before it.
+     *
+     * @throws SQLiteException
+     */
     public function push(array $data): static
     {
-        if ($this->preparedStatement === null) {
-            $columns = array_map(
-                static fn ($columnName) => Column::createDefaultColumn((string) $columnName),
-                array_keys($data)
-            );
+        $columns = array_keys($data);
 
-            $sql = sprintf(
-                'insert into %s (%s) values (%s)',
-                $this,
-                implode(',', $columns),
-                implode(',', array_fill(0, \count($columns), '?'))
-            );
-
-            $this->preparedStatement = new PreparedStatement($this->conn, $sql);
-
-            if ($this->withTransaction) {
-                $this->preparedStatement->activateTransaction();
+        if ($columns !== $this->pushColumns) {
+            if ($data !== [] && array_is_list($data) && \count($data) === \count($this->pushColumns)) {
+                $columns = $this->pushColumns;
+            } else {
+                $this->pushColumns = $columns;
             }
         }
 
-        $this->preparedStatement->bind(array_values($data));
-
-        return $this;
+        return $this->insert($columns, array_values($data));
     }
 
-    /** @throws SQLiteException */
+    /**
+     * Inserts the values in the order of the table columns.
+     *
+     * @throws SQLiteException
+     */
     public function pushWithoutKeys(array $data): static
     {
-        if ($this->preparedStatement === null) {
-            $sql = sprintf(
-                'insert into %s values (%s)',
-                $this,
-                implode(',', array_fill(0, \count($data), '?'))
+        $key = '#' . \count($data);
+
+        if (!isset($this->preparedStatements[$key])) {
+            $this->preparedStatements[$key] = $this->prepareInsert(
+                sprintf(
+                    'insert into %s values (%s)',
+                    $this,
+                    implode(',', array_fill(0, \count($data), '?'))
+                )
             );
-
-            $this->preparedStatement = new PreparedStatement($this->conn, $sql);
-
-            if ($this->withTransaction) {
-                $this->preparedStatement->activateTransaction();
-            }
         }
 
-        $this->preparedStatement->bind(array_values($data));
+        $this->preparedStatements[$key]->bind(array_values($data));
 
         return $this;
     }
@@ -454,6 +472,60 @@ class Table implements Countable, IteratorAggregate, Stringable
     protected function getColumnFactory(): ColumnFactoryInterface
     {
         return $this->columnFactory ??= new ColumnFactory();
+    }
+
+    /**
+     * Inserts the values into the given columns, columns left out get their default value.
+     *
+     * @param list<int|string> $columns
+     * @param list<mixed>      $values
+     *
+     * @throws SQLiteException
+     */
+    protected function insert(array $columns, array $values): static
+    {
+        if ($columns !== $this->lastInsertColumns || !isset($this->preparedStatements[$this->lastInsertKey])) {
+            $key = \count($columns) . ':' . implode("\0", $columns);
+
+            if (!isset($this->preparedStatements[$key])) {
+                if ($columns === []) {
+                    $sql = sprintf('insert into %s default values', $this);
+                } else {
+                    $sql = sprintf(
+                        'insert into %s (%s) values (%s)',
+                        $this,
+                        implode(',', array_map(static fn ($column) => Column::createDefaultColumn((string) $column), $columns)),
+                        implode(',', array_fill(0, \count($columns), '?'))
+                    );
+                }
+
+                $this->preparedStatements[$key] = $this->prepareInsert($sql);
+            }
+
+            $this->lastInsertColumns = $columns;
+            $this->lastInsertKey = $key;
+        }
+
+        $this->preparedStatements[$this->lastInsertKey]->bind($values);
+
+        return $this;
+    }
+
+    private function prepareInsert(string $sql): PreparedStatement
+    {
+        if (\count($this->preparedStatements) >= self::MAX_PREPARED_STATEMENTS) {
+            $pushColumns = $this->pushColumns;
+            $this->commit();
+            $this->pushColumns = $pushColumns;
+        }
+
+        $preparedStatement = new PreparedStatement($this->conn, $sql);
+
+        if ($this->withTransaction) {
+            $preparedStatement->activateTransaction();
+        }
+
+        return $preparedStatement;
     }
 
     /** @throws SQLiteException */
