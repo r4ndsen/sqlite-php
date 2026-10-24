@@ -29,6 +29,11 @@ final class ColumnTypeTest extends TestCase
         yield 'real affinity from name' => ['REAL', ColumnType::REAL];
         yield 'float affinity' => ['float', ColumnType::REAL];
         yield 'blob affinity' => ['BLOB', ColumnType::BLOB];
-        yield 'text fallback' => ['varchar(255)', ColumnType::TEXT];
+        yield 'text from char' => ['varchar(255)', ColumnType::TEXT];
+        yield 'text from clob' => ['CLOB', ColumnType::TEXT];
+        yield 'integer anywhere in the name' => ['UNSIGNED BIG INT', ColumnType::INTEGER];
+        yield 'double affinity' => ['DOUBLE PRECISION', ColumnType::REAL];
+        yield 'no type' => ['', ColumnType::BLOB];
+        yield 'numeric fallback' => ['string', ColumnType::NUMERIC];
     }
 }

@@ -34,7 +34,7 @@ $pragma->journal_mode = 'MEMORY';
 $pragma->setJournalMode(JournalMode::OFF);
 
 $pragma->setSynchronous(Synchronous::EXTRA);
-$pragma->getSynchronous()->value; // 4
+$pragma->getSynchronous()->value; // 3
 
 $pragma->synchronous = 2;          // Equivalent to Synchronous::FULL
 $pragma->getSynchronous()->value;  // 2

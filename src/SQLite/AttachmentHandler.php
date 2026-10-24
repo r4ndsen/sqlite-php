@@ -7,18 +7,29 @@ namespace r4ndsen\SQLite;
 use Exception;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\AttachedDatabaseException;
+use r4ndsen\SQLite\Exception\DatabaseException;
 use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Traits\ExecTrait;
 use r4ndsen\SQLite\Traits\PragmaTrait;
-use ReflectionException;
 
 class AttachmentHandler
 {
     use ExecTrait;
     use PragmaTrait;
 
-    /** @var array<string,SQLite> */
+    /**
+     * Separate connections to the attached databases, opened on first use.
+     *
+     * @var array<string, SQLite>
+     */
     private array $connections = [];
+
+    /**
+     * Paths of the attached databases by their lowercased identifier.
+     *
+     * @var array<string, string>
+     */
+    private array $paths = [];
 
     public function __construct(private Connection $conn)
     {
@@ -28,7 +39,6 @@ class AttachmentHandler
      * attach another sqlite database by its path and give it an identifier.
      *
      * @throws AttachedDatabaseException
-     * @throws ReflectionException
      * @throws SQLiteException
      */
     public function attach(string $path, string $identifier): bool
@@ -38,42 +48,55 @@ class AttachmentHandler
         }
 
         try {
-            $this->connections[$identifier] = new SQLite($path);
-
             $sql = sprintf(
                 "attach '%s' as '%s'",
                 $this->escape($path),
                 $this->escape($identifier),
             );
 
-            return $this->exec($sql);
+            $result = $this->exec($sql);
         } catch (Exception $e) {
             throw AttachedDatabaseException::from($e);
         }
+
+        $this->paths[strtolower($identifier)] = $path;
+
+        return $result;
     }
 
     /** @throws AttachedDatabaseException */
     public function detach(string $identifier): bool
     {
         try {
-            unset($this->connections[$identifier]);
-
             $sql = sprintf("detach '%s'", $this->escape($identifier));
 
-            return $this->exec($sql);
+            $result = $this->exec($sql);
         } catch (Exception $e) {
             throw AttachedDatabaseException::from($e);
         }
+
+        unset($this->paths[strtolower($identifier)], $this->connections[strtolower($identifier)]);
+
+        return $result;
     }
 
     /**
-     * returns a native sqlite object of an attached database.
+     * returns a separate sqlite object for an attached database.
      *
      * @throws AttachedDatabaseException
+     * @throws DatabaseException
      */
     public function get(string $identifier): SQLite
     {
-        return $this->connections[$identifier] ?? throw new AttachedDatabaseException('No attached sqlite with identifier: ' . $identifier);
+        $key = strtolower($identifier);
+        $path = $this->paths[$key] ?? throw new AttachedDatabaseException('No attached sqlite with identifier: ' . $identifier);
+
+        // a second connection to an in-memory database would open a new, empty database
+        if ($path === '' || $path === ':memory:') {
+            throw new AttachedDatabaseException(sprintf('The in-memory database %s can only be used through the connection it is attached to', $identifier));
+        }
+
+        return $this->connections[$key] ??= new SQLite($path);
     }
 
     // Returns whether a database with given identifier attached.

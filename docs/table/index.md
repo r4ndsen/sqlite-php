@@ -15,37 +15,70 @@ $dataTable = $sqlite->data;
 
 ```php
 use r4ndsen\SQLite\Column;
-
-$dataTable->addCreateColumn(Column::createIntegerColumn('id'));
-$dataTable->addCreateColumn(Column::createTextColumn('title', null));
-$dataTable->create();
-```
-
-### Adding constraints
-
-```php
-use r4ndsen\SQLite\Column;
-use r4ndsen\SQLite\TableConstraint;
 use r4ndsen\SQLite\OnConflict;
+use r4ndsen\SQLite\TableConstraint;
 
-$titleColumn = Column::createDefaultColumn('title');
+$titleColumn = Column::createTextColumn('title', null);
 
 $constraint = (new TableConstraint())
     ->addIndexedColumn($titleColumn)
     ->uniqueKey();
 $constraint->onConflict = OnConflict::IGNORE;
 
-$dataTable->addConstraint($constraint);
-$dataTable->create();
+$dataTable
+    ->addCreateColumn(Column::createIntegerColumn('id'))
+    ->addCreateColumn($titleColumn)
+    ->addConstraint($constraint)
+    ->create();
 ```
 
 ```sql
 create table `data` (
-    `id` integer default '',
-    `title` text default null,
+    `id` INTEGER default null,
+    `title` TEXT default null,
     unique (`title`) on conflict ignore
 )
 ```
+
+`Column::disallowNull()` adds `NOT NULL`. Without a default value, inserts then
+have to provide a value for that column.
+
+## Indexes
+
+```php
+use r4ndsen\SQLite\Column;
+use r4ndsen\SQLite\Index;
+
+$dataTable->addIndex(new Index(Column::createTextColumn('title')));
+// create index if not exists `data_title` on `data` (`title`)
+
+$dataTable->addIndex(
+    (new Index(Column::createIntegerColumn('id'), Column::createTextColumn('title')))
+        ->setName('data_id_title')
+        ->setUnique()
+);
+```
+
+An index on a single column is named `<table>_<column>` unless you set a name.
+Indexes on several columns need a name.
+
+## Inserting rows
+
+`push()` inserts a row whose keys are the column names. Columns you leave out
+get their default value from SQLite. A row without keys is bound in the column
+order of the row pushed before it.
+
+```php
+$dataTable
+    ->push(['id' => 1, 'title' => 'Moby Dick'])
+    ->push([2, 'It'])
+    ->push(['title' => 'Dune'])
+    ->commit();
+```
+
+`pushWithoutKeys()` binds the values in the order of the table columns. Use
+`withTransaction(true)` to wrap the inserts in a transaction; see
+[transactions](../transactions.md).
 
 ## Table conveniences
 

@@ -280,6 +280,26 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_count_rows_of_tables_without_rowid(): void
+    {
+        $this->SQLite->exec('create table t (a primary key) without rowid');
+        $this->SQLite->exec("insert into t values ('x')");
+
+        self::assertCount(1, $this->SQLite->t);
+        self::assertSame(0, $this->SQLite->t->maxRow());
+    }
+
+    #[Test]
+    public function it_should_count_rows_with_rowid_zero(): void
+    {
+        $this->SQLite->exec('create table t (a)');
+        $this->SQLite->exec("insert into t (rowid, a) values (0, 'x')");
+
+        self::assertCount(1, $this->SQLite->t);
+        self::assertTrue($this->SQLite->t->hasData());
+    }
+
+    #[Test]
     public function it_should_create_allow_transaction(): void
     {
         $t = $this->SQLite->getTable('table');
@@ -392,6 +412,15 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_find_tables_case_insensitively(): void
+    {
+        $this->SQLite->exec('create table Tasks (a)');
+
+        self::assertTrue($this->SQLite->getTable('tasks')->exists());
+        self::assertCount(1, $this->SQLite->getTable('TASKS')->columns());
+    }
+
+    #[Test]
     public function it_should_last_insert_row_id_with_multiple_tables(): void
     {
         $t = $this->SQLite->table->getDynamicInsertTable();
@@ -477,6 +506,47 @@ final class TableTest extends TestCase
         } catch (TooManyTablesJoinedException $e) {
             self::assertMatchesRegularExpression('/Unable to prepare statement:( 1,)? at most 64 tables in a join/', $e->getMessage());
         }
+    }
+
+    #[Test]
+    public function it_should_not_list_internal_tables(): void
+    {
+        $this->SQLite->exec('create table t (id integer primary key autoincrement)');
+        $this->SQLite->exec('insert into t default values');
+
+        self::assertSame(['t'], array_map(static fn (Table $table) => $table->getName(), $this->SQLite->getAllTables()));
+    }
+
+    #[Test]
+    public function it_should_push_empty_rows_with_default_values(): void
+    {
+        $this->SQLite->exec("create table t (a default 'x', b)");
+        $this->SQLite->t->push([])->commit();
+
+        self::assertSame([['a' => 'x', 'b' => null]], $this->SQLite->t->toArray());
+    }
+
+    #[Test]
+    public function it_should_push_rows_by_column_name(): void
+    {
+        $this->SQLite->exec('create table t (a, b)');
+        $t = $this->SQLite->getTable('t');
+
+        $t->push(['a' => 1, 'b' => 2])
+            ->push([3, 4])
+            ->push(['b' => 5, 'a' => 6])
+            ->push([7, 8])
+            ->push(['b' => 9])
+            ->commit()
+        ;
+
+        self::assertSame([
+            ['a' => 1, 'b' => 2],
+            ['a' => 3, 'b' => 4],
+            ['a' => 6, 'b' => 5],
+            ['a' => 8, 'b' => 7],
+            ['a' => null, 'b' => 9],
+        ], $t->toArray());
     }
 
     #[Test]

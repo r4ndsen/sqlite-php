@@ -114,17 +114,20 @@ final class Pragma implements Constant
     /** @return ColumnSchema[] */
     public function getTableColumnSchemas(Table $table): array
     {
-        /** @phpstan-ignore return.type */
         return $this->fetchInstances(
             sql: sprintf('pragma table_info(%s)', $table),
             class: ColumnSchema::class
         );
     }
 
-    /** @return string[] */
+    /**
+     * Names of the tables, without SQLite's internal tables like sqlite_sequence.
+     *
+     * @return string[]
+     */
     public function getTableNames(): array
     {
-        return $this->fetchCol("select `name` from `sqlite_master` where `type` = 'table'");
+        return $this->fetchCol("select `name` from `sqlite_master` where `type` = 'table' and `name` not like 'sqlite\\_%' escape '\\'");
     }
 
     public function getTempStore(): TempStore
@@ -180,8 +183,8 @@ final class Pragma implements Constant
      */
     public function setPageSize(int $size): self
     {
-        // 1024 .. 65536
-        $valid = [2 << 9, 2 << 10, 2 << 11, 2 << 12, 2 << 13, 2 << 14, 2 << 15];
+        // 512 .. 65536
+        $valid = [2 << 8, 2 << 9, 2 << 10, 2 << 11, 2 << 12, 2 << 13, 2 << 14, 2 << 15];
         if (!\in_array($size, $valid, true)) {
             throw new SQLiteException(Constant::PAGE_SIZE . ' must be in (' . implode(', ', $valid) . ')');
         }

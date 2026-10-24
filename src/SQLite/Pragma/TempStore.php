@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace r4ndsen\SQLite\Pragma;
 
 use InvalidArgumentException;
 
-/** @see https://sqlite.org/pragma.html#pragma_locking_mode */
+/** @see https://sqlite.org/pragma.html#pragma_temp_store */
 enum TempStore: int
 {
     case DEFAULT = 0;

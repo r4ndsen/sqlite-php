@@ -36,6 +36,24 @@ final class TransactionTest extends TestCase
     }
 
     #[Test]
+    public function it_should_rollback(): void
+    {
+        $this->SQLite->exec('create table t (a)');
+        $tx = $this->SQLite->getConnection()->getTransaction();
+
+        $tx->begin();
+        $this->SQLite->exec('insert into t values (1)');
+        $tx->rollback();
+
+        self::assertFalse($tx->active());
+        self::assertCount(0, $this->SQLite->t);
+
+        // rolling back without an active transaction does nothing
+        $tx->rollback();
+        self::assertFalse($tx->active());
+    }
+
+    #[Test]
     public function it_should_transaction_integration_testing(): void
     {
         $id = Column::createIntegerColumn('id');

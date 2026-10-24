@@ -6,12 +6,9 @@ namespace r4ndsen\SQLite\Table;
 
 use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
 use r4ndsen\SQLite\Exception\SQLiteException;
-use r4ndsen\SQLite\Table;
 
 class FixedInsert extends DynamicInsert
 {
-    protected bool $withRowid = true;
-
     /**
      * @throws SQLiteException
      * @throws ColumnDoesNotExistException
@@ -24,7 +21,6 @@ class FixedInsert extends DynamicInsert
             }
 
             $this->initializeColumnCaseMap();
-            $this->initializePushData();
         }
 
         foreach (array_keys($data) as $columnName) {
@@ -35,8 +31,6 @@ class FixedInsert extends DynamicInsert
             }
         }
 
-        Table::push($this->combineData($data));
-
-        return $this;
+        return $this->insertRow($this->combineData($data));
     }
 }

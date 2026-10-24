@@ -20,3 +20,13 @@ $dataTable
 | 1 | Moby Dick |  |
 | 2 |  | https://github.com |
 |  | IT | https://www.stephenking.com |
+
+New columns are created as `TEXT` with an empty string as default value, which
+is why the missing values above are empty. Columns missing in a row are left out
+of the insert, so existing tables keep their own defaults, including expressions
+like `CURRENT_TIMESTAMP`.
+
+Dynamic insert tables write inside a transaction, which is committed every
+10,000 rows, on `commit()` and when the table object is destroyed. Call
+`commit()` before reading the data from another connection. See
+[transactions](../transactions.md).

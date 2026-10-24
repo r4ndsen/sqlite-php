@@ -4,11 +4,11 @@ declare(strict_types=0);
 
 namespace r4ndsen\SQLite;
 
-use BadFunctionCallException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\ColumnFactory\ColumnFactory;
+use r4ndsen\SQLite\Exception\QueryException;
 use Stringable;
 
 final class ColumnTest extends TestCase
@@ -187,10 +187,18 @@ final class ColumnTest extends TestCase
     #[Test]
     public function it_should_disallow_null(): void
     {
-        $this->expectException(BadFunctionCallException::class);
+        $c = Column::createTextColumn('test', null)->disallowNull();
+        self::assertSame('`test` TEXT default null NOT NULL', $c->getCreateStatement());
 
-        $c = Column::createTextColumn('test', null);
-        $c->disallowNull();
+        $table = $this->SQLite->getTable('required');
+        $table->addCreateColumn(Column::createIntegerColumn('id'))->addCreateColumn($c)->create();
+
+        $table->push(['id' => 1, 'test' => 'value'])->commit();
+        self::assertCount(1, $table);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('NOT NULL constraint failed: required.test');
+        $table->push(['id' => 2]);
     }
 
     #[Test]

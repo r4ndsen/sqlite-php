@@ -22,7 +22,9 @@ use ReflectionException;
 
 class SQLite
 {
-    use PragmaTrait;
+    use PragmaTrait {
+        getPragma as public;
+    }
     use QueryTrait;
 
     private ?AttachmentHandler $attachmentHandler = null;
@@ -43,6 +45,12 @@ class SQLite
         }
 
         return $this->getTable($tableName);
+    }
+
+    // Whether the table exists, "pragma" is always available
+    public function __isset(string $tableName): bool
+    {
+        return strtolower($tableName) === 'pragma' || $this->getTable($tableName)->exists();
     }
 
     /**
@@ -97,9 +105,15 @@ class SQLite
         return $this->getTableFactory()->loadTable($tableName);
     }
 
+    /**
+     * Reconnects to the database. Tables fetched before need to be fetched again.
+     *
+     * @throws SQLiteException
+     */
     public function refresh(): void
     {
-        $this->connect();
+        $this->conn->reopen();
+        $this->loadExtensions();
         $this->getTableFactory()->reset();
         $this->attachmentHandler = null;
     }

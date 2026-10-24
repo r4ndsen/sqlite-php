@@ -8,8 +8,13 @@ use r4ndsen\SQLite\Exception\MissingParameterException;
 
 final class QueryParser
 {
-    // Skip query parts matching this regex.
-    private const SKIP_BINDING_PARAM_REGEX = '/^(\'|"|`|:[^a-zA-Z_])/um';
+    // Placeholders are never replaced in query parts matching this regex.
+    private const SKIP_BINDING_PARAM_REGEX = '#^(?:[\'"`\[]|--|/\*)#';
+
+    // String literals, quoted identifiers and comments as SQLite reads them (quotes are escaped by doubling them).
+    private const STATEMENT_SPLIT_REGEX = <<<'REGEX'
+        #('(?:[^']|'')*'|"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[[^\]]*\]|--[^\n]*|/\*.*?(?:\*/|\z))#s
+        REGEX;
 
     // How many times has a named placeholder been used?
     private array $count = [
@@ -18,7 +23,6 @@ final class QueryParser
     private string $finalStatement;
     private array $finalValues = [];
     private int $num = 0;
-    private string $statementSplitRegex;
 
     public function __construct(
         private readonly string $statement,
@@ -54,7 +58,7 @@ final class QueryParser
     private function getParts(string $queryString): array
     {
         return (array) preg_split(
-            pattern: $this->getStatementSplitRegex(),
+            pattern: self::STATEMENT_SPLIT_REGEX,
             subject: $queryString,
             flags: PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
         );
@@ -72,23 +76,6 @@ final class QueryParser
         $count = ++$this->count[$placeholder];
 
         return $placeholder . '__' . $count;
-    }
-
-    // Split the statement on this regex into parts.
-    private function getStatementSplitRegex(): string
-    {
-        if (!isset($this->statementSplitRegex)) {
-            foreach ([34, 39, 96] as $delimiter) {
-                $pattern[] = sprintf(
-                    '%1$s(?:[^%1$s\\\\]|\\\\%1$s?)*%1$s',
-                    \chr($delimiter)
-                );
-            }
-
-            $this->statementSplitRegex = '#(' . implode('|', $pattern) . ')#';
-        }
-
-        return $this->statementSplitRegex;
     }
 
     // Bind or quote a named placeholder in a query subpart
@@ -114,17 +101,20 @@ final class QueryParser
         return ':' . $name;
     }
 
-    // Bind or quote a numbered placeholder in a query subpart
-    private function prepareNumberedPlaceholder(): string
+    // Bind or quote a numbered placeholder ("?" or "?NNN") in a query subpart
+    private function prepareNumberedPlaceholder(string $sub): string
     {
-        ++$this->num;
-        if (\array_key_exists($this->num, $this->values) === false) {
-            throw new MissingParameterException(sprintf('Parameter %u is missing from the bound values', $this->num));
+        // a plain "?" takes the number following the largest one assigned so far
+        $num = $sub === '?' ? $this->num + 1 : (int) substr($sub, 1);
+        $this->num = max($this->num, $num);
+
+        if (\array_key_exists($num, $this->values) === false) {
+            throw new MissingParameterException(sprintf('Parameter %u is missing from the bound values', $num));
         }
 
         $expanded = [];
-        $values = (array) $this->values[$this->num];
-        if ($this->values[$this->num] === null) {
+        $values = (array) $this->values[$num];
+        if ($this->values[$num] === null) {
             $values[] = null;
         }
         foreach ($values as $value) {
@@ -143,7 +133,7 @@ final class QueryParser
         $str = '';
         foreach ($subs as $sub) {
             $str .= match ($sub[0]) {
-                '?'     => $this->prepareNumberedPlaceholder(),
+                '?'     => $this->prepareNumberedPlaceholder($sub),
                 ':'     => $this->prepareNamedPlaceholder($sub),
                 default => $sub,
             };
@@ -169,9 +159,9 @@ final class QueryParser
             return $part;
         }
 
-        // split into sub-parts by ":name" and "?"
+        // split into sub-parts by ":name", "?" and "?NNN"
         $subs = (array) preg_split(
-            '/(?<!:)(:[a-zA-Z_]\w*)|(\?)/um',
+            '/(?<!:)(:[a-zA-Z_]\w*)|(\?\d*)/u',
             $part,
             -1,
             PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY

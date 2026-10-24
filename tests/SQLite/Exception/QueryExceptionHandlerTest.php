@@ -92,6 +92,12 @@ final class QueryExceptionHandlerTest extends TestCase
             null,
         ];
 
+        yield 'unique constraint via exec' => [
+            'UNIQUE constraint failed: foo.id',
+            UniqueConstraintException::class,
+            null,
+        ];
+
         yield 'no such table via prepare' => [
             'Unable to prepare statement: no such table: foo',
             TableDoesNotExistException::class,

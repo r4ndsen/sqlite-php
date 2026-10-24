@@ -54,7 +54,7 @@ final class PreparedStatement
         $i = 0;
         foreach ($data as $value) {
             // binding starts at index "1"
-            $this->_bind($i + 1, $value, $types[$i] ?? SQLITE3_TEXT);
+            $this->_bind($i + 1, $value, $types[$i] ?? null);
             $i++;
         }
 
@@ -71,7 +71,7 @@ final class PreparedStatement
     public function bindAssoc(array $data, array $types = []): SQLite3Result
     {
         foreach ($data as $key => $value) {
-            $this->_bind((string) $key, $value, $types[$key] ?? SQLITE3_TEXT);
+            $this->_bind((string) $key, $value, $types[$key] ?? null);
         }
 
         return $this->execute();
@@ -128,6 +128,12 @@ final class PreparedStatement
         }
     }
 
+    // Number of parameters the prepared statement expects
+    public function paramCount(): int
+    {
+        return $this->getStatement()->paramCount();
+    }
+
     public function setCommitModulo(int $modulo): self
     {
         if ($modulo <= 0) {
@@ -140,17 +146,35 @@ final class PreparedStatement
     }
 
     /**
+     * Binds the value with the given type or, if no type is given, with the type matching the PHP value.
+     *
      * @throws BindValueException
      * @throws InvalidArgumentException
      */
-    private function _bind(int|string $param, mixed $value, int $type): void
+    private function _bind(int|string $param, mixed $value, ?int $type): void
     {
-        if (\is_string($value) || $value instanceof Stringable) {
-            $value = str_replace("\0", '', (string) $value);
+        if ($value instanceof Stringable) {
+            $value = (string) $value;
         }
 
         if ($value !== null && !\is_scalar($value)) {
             throw new InvalidArgumentException('Bind value must be scalar');
+        }
+
+        if (\is_bool($value)) {
+            $value = (int) $value;
+        }
+
+        $type ??= match (true) {
+            $value === null   => SQLITE3_NULL,
+            \is_int($value)   => SQLITE3_INTEGER,
+            \is_float($value) => SQLITE3_FLOAT,
+            default           => SQLITE3_TEXT,
+        };
+
+        // blobs may contain null bytes, text must not
+        if (\is_string($value) && $type !== SQLITE3_BLOB) {
+            $value = str_replace("\0", '', $value);
         }
 
         if ($this->getStatement()->bindValue($param, $value, $type) === false) {

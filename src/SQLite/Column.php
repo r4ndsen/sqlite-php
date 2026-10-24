@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
-use BadMethodCallException;
 use r4ndsen\SQLite\Traits\EscapeTrait;
 use Stringable;
 
@@ -78,7 +77,7 @@ final class Column implements CreateColumn, Stringable
             $schema->defaultValue,
         );
         $column->setColumnId($schema->columnId);
-        $column->setIsPrimaryKey($schema->isPrivateKey);
+        $column->setIsPrimaryKey($schema->isPrimaryKey);
 
         if ($schema->notNull) {
             $column->disallowNull();
@@ -92,7 +91,7 @@ final class Column implements CreateColumn, Stringable
         return new self($name, ColumnType::INTEGER, $defaultValue);
     }
 
-    public static function createNumericColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = ''): self
+    public static function createNumericColumn(string $name, string|Stringable|int|float|bool|null $defaultValue = null): self
     {
         return new self($name, ColumnType::NUMERIC, $defaultValue);
     }
@@ -102,11 +101,9 @@ final class Column implements CreateColumn, Stringable
         return new self($name, ColumnType::TEXT, $defaultValue);
     }
 
+    // Without a default value, inserts have to provide a value for this column
     public function disallowNull(): self
     {
-        if ($this->defaultValue === null) {
-            throw new BadMethodCallException('Cannot disallow NULL if the default value is NULL');
-        }
         $this->maybeNull = self::NOT_NULL;
 
         return $this;
