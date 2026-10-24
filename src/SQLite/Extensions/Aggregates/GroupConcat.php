@@ -14,7 +14,10 @@ class GroupConcat extends AbstractAggregate
                 'data'      => [],
             ];
 
-            $this->setContextValue($context, $string);
+            // like the native group_concat(), null values are skipped
+            if ($string !== null) {
+                $this->setContextValue($context, $string);
+            }
 
             return $context;
         };
@@ -22,7 +25,7 @@ class GroupConcat extends AbstractAggregate
 
     public function getFinalCallback(): callable
     {
-        return static fn ($context) => implode($context['delimiter'], $context['data']);
+        return static fn (?array $context) => $context === null || $context['data'] === [] ? null : implode($context['delimiter'], $context['data']);
     }
 
     protected function setContextValue(array &$context, mixed $value): void

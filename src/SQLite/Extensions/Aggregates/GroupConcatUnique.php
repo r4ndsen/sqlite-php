@@ -8,11 +8,12 @@ class GroupConcatUnique extends GroupConcat
 {
     public function getFinalCallback(): callable
     {
-        return static fn ($context) => implode($context['delimiter'], array_keys($context['data']));
+        return static fn (?array $context) => $context === null || $context['data'] === [] ? null : implode($context['delimiter'], array_keys($context['data']));
     }
 
     protected function setContextValue(array &$context, mixed $value): void
     {
-        $context['data'][$value] = true;
+        // floats cannot be used as array keys without losing their decimals
+        $context['data'][\is_float($value) ? (string) $value : $value] = true;
     }
 }

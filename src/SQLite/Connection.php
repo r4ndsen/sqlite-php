@@ -20,9 +20,9 @@ final class Connection extends SQLite3
 
     /** @throws DatabaseException */
     public function __construct(
-        string $filename = '',
-        int $flags = SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE,
-        string $encryptionKey = '',
+        private readonly string $filename = '',
+        private readonly int $flags = SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE,
+        private readonly string $encryptionKey = '',
     ) {
         $this->enableExceptions(true);
 
@@ -91,6 +91,26 @@ final class Connection extends SQLite3
         } catch (Exception $e) {
             $this->queryExceptionHandler->handle($e, $query);
         }
+    }
+
+    /**
+     * Commits an open transaction, closes the connection and opens it again.
+     * Functions, collations, aggregates and attached databases are bound to the connection and need to be registered again.
+     *
+     * @throws DatabaseException
+     */
+    public function reopen(): void
+    {
+        $this->getTransaction()->commit();
+        $this->close();
+
+        try {
+            $this->open($this->filename, $this->flags, $this->encryptionKey);
+        } catch (Exception $e) {
+            throw DatabaseException::from($e);
+        }
+
+        $this->enableExtendedResultCodes(true);
     }
 
     // Finalize any open transaction before executing.

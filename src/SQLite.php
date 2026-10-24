@@ -97,9 +97,15 @@ class SQLite
         return $this->getTableFactory()->loadTable($tableName);
     }
 
+    /**
+     * Reconnects to the database. Tables fetched before need to be fetched again.
+     *
+     * @throws SQLiteException
+     */
     public function refresh(): void
     {
-        $this->connect();
+        $this->conn->reopen();
+        $this->loadExtensions();
         $this->getTableFactory()->reset();
         $this->attachmentHandler = null;
     }

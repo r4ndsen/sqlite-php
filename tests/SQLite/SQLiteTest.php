@@ -26,6 +26,27 @@ final class SQLiteTest extends TestCase
     }
 
     #[Test]
+    public function it_should_keep_extensions_and_tables_after_refresh(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sqlite');
+        self::assertIsString($path);
+
+        try {
+            $sqlite = new SQLite($path);
+            $sqlite->table->getDynamicInsertTable()->push(['id' => 1])->commit();
+
+            $sqlite->refresh();
+
+            self::assertSame(md5('a'), $sqlite->fetchValue("select md5('a')"));
+            self::assertCount(1, $sqlite->table);
+            $sqlite->table->getDynamicInsertTable()->push(['id' => 2])->commit();
+            self::assertCount(2, $sqlite->table);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    #[Test]
     public function it_should_database_malformed_exception_on_exec(): void
     {
         $this->expectException(DatabaseMalformedException::class);
