@@ -1,4 +1,5 @@
-[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/r4ndsen/sqlite-php/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/r4ndsen/sqlite-php/commits/1.0.0
 
 # Changelog
@@ -6,6 +7,8 @@
 All notable changes to this project will be listed in this file.
 
 ## [Unreleased]
+
+## [1.0.1] - 2026-10-24
 
 ### Changed
 - Bound values keep their type: integers and booleans are bound as `INTEGER`,
