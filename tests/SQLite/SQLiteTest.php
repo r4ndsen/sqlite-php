@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
+use Closure;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\DatabaseMalformedException;
@@ -41,30 +43,6 @@ final class SQLiteTest extends TestCase
         self::assertTrue($this->SQLite->getConnection()->getTransaction()->active());
         $this->SQLite->refresh();
         self::assertFalse($this->SQLite->getConnection()->getTransaction()->active());
-    }
-
-    #[Test]
-    public function it_should_database_malformed_exception_on_exec(): void
-    {
-        $this->expectException(DatabaseMalformedException::class);
-        $s = new SQLite(self::FIXTURES_DIR . '/malformed.sqlite');
-        $s->exec('update data set id = 123 where 1');
-    }
-
-    #[Test]
-    public function it_should_database_malformed_exception_on_query(): void
-    {
-        $this->expectException(DatabaseMalformedException::class);
-        $s = new SQLite(self::FIXTURES_DIR . '/malformed.sqlite');
-        $s->getConnection()->query('select language from data');
-    }
-
-    #[Test]
-    public function it_should_database_malformed_exception_on_query_single(): void
-    {
-        $this->expectException(DatabaseMalformedException::class);
-        $s = new SQLite(self::FIXTURES_DIR . '/malformed.sqlite');
-        $s->querySingle('select language from data');
     }
 
     #[Test]
@@ -188,12 +166,14 @@ final class SQLiteTest extends TestCase
         );
     }
 
+    /** @param Closure(SQLite): mixed $access */
     #[Test]
-    public function it_should_sq_lite_validate_malformed(): void
+    #[DataProvider('provideMalformedDatabaseAccess')]
+    public function it_should_throw_database_malformed_exception(Closure $access): void
     {
         $this->expectException(DatabaseMalformedException::class);
-        $s = new SQLite(self::FIXTURES_DIR . '/malformed.sqlite');
-        $s->validate();
+
+        $access(new SQLite(self::FIXTURES_DIR . '/malformed.sqlite'));
     }
 
     #[Test]
@@ -213,5 +193,14 @@ final class SQLiteTest extends TestCase
 
         $s = new SQLite(self::FIXTURES_DIR . '/fragmentation.sqlite');
         $s->validate();
+    }
+
+    /** @return iterable<string, array{Closure(SQLite): mixed}> */
+    public static function provideMalformedDatabaseAccess(): iterable
+    {
+        yield 'exec' => [static fn (SQLite $s) => $s->exec('update data set id = 123 where 1')];
+        yield 'query' => [static fn (SQLite $s) => $s->getConnection()->query('select language from data')];
+        yield 'querySingle' => [static fn (SQLite $s) => $s->querySingle('select language from data')];
+        yield 'validate' => [static fn (SQLite $s) => $s->validate()];
     }
 }

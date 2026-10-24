@@ -29,15 +29,6 @@ final class AttachedTest extends TestCase
     }
 
     #[Test]
-    public function it_should_attach(): void
-    {
-        $this->expectException(AttachedDatabaseException::class);
-
-        self::assertTrue($this->SQLite->attach($this->attachedFile, 'one'));
-        $this->SQLite->attach($this->attachedFile, 'one');
-    }
-
-    #[Test]
     public function it_should_attach_already_in_use(): void
     {
         $this->expectException(AttachedDatabaseException::class);
@@ -84,17 +75,6 @@ final class AttachedTest extends TestCase
         $this->expectExceptionMessage('No attached sqlite with identifier: One');
 
         $this->SQLite->getAttached('One');
-    }
-
-    #[Test]
-    public function it_should_get_attached(): void
-    {
-        $this->expectException(AttachedDatabaseException::class);
-
-        self::assertTrue($this->SQLite->attach($this->attachedFile, 'one'));
-        $this->SQLite->getAttached('one');
-        self::assertTrue($this->SQLite->detach('one'));
-        $this->SQLite->getAttached('one');
     }
 
     #[Test]

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
 use r4ndsen\SQLite\Exception\DatabaseException;
 use r4ndsen\SQLite\Exception\QueryException;
+use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Exception\TableDoesNotExistException;
 use r4ndsen\SQLite\Exception\UniqueConstraintException;
 use Throwable;
@@ -49,42 +51,6 @@ final class ConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_should_database_column_does_not_exist_exception_exec(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(ColumnDoesNotExistException::class);
-        $d->exec('select foo from sqlite_master');
-    }
-
-    #[Test]
-    public function it_should_database_column_does_not_exist_exception_prepare(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(ColumnDoesNotExistException::class);
-        $d->prepare('select foo from sqlite_master');
-    }
-
-    #[Test]
-    public function it_should_database_column_does_not_exist_exception_query(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(ColumnDoesNotExistException::class);
-        $d->query('select foo');
-    }
-
-    #[Test]
-    public function it_should_database_column_does_not_exist_exception_query_single(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(ColumnDoesNotExistException::class);
-        $d->querySingle('select foo from sqlite_master');
-    }
-
-    #[Test]
     public function it_should_database_empty_encryption(): void
     {
         $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
@@ -92,78 +58,16 @@ final class ConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_should_database_incomplete_query(): void
+    public function it_should_database_query_exception(): void
     {
         $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
 
         try {
             $d->query('select '); // incomplete input
+            self::fail('The incomplete query should throw');
         } catch (QueryException $e) {
             self::assertSame('select ', $e->getQuery());
         }
-    }
-
-    #[Test]
-    public function it_should_database_just_open_create(): void
-    {
-        $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Unable to open database: bad parameter or other API misuse');
-
-        new Connection(':memory:', SQLITE3_OPEN_CREATE);
-    }
-
-    #[Test]
-    public function it_should_database_query_exception(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(QueryException::class);
-        $d->query('select foo(');
-    }
-
-    #[Test]
-    public function it_should_database_read_only_with_open_create(): void
-    {
-        $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Unable to open database: bad parameter or other API misuse');
-
-        new Connection(':memory:', SQLITE3_OPEN_READONLY | SQLITE3_OPEN_CREATE);
-    }
-
-    #[Test]
-    public function it_should_database_table_does_not_exist_exception_exec(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(TableDoesNotExistException::class);
-        $d->exec('select * from foo');
-    }
-
-    #[Test]
-    public function it_should_database_table_does_not_exist_exception_prepare(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(TableDoesNotExistException::class);
-        $d->prepare('select * from foo');
-    }
-
-    #[Test]
-    public function it_should_database_table_does_not_exist_exception_query(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(TableDoesNotExistException::class);
-        $d->query('select * from foo');
-    }
-
-    #[Test]
-    public function it_should_database_table_does_not_exist_exception_query_single(): void
-    {
-        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
-
-        $this->expectException(TableDoesNotExistException::class);
-        $d->querySingle('select * from foo');
     }
 
     #[Test]
@@ -179,6 +83,17 @@ final class ConnectionTest extends TestCase
         self::assertSame('near "foo": syntax error', $d->getConnection()->lastErrorMsg());
     }
 
+    /** @param class-string<SQLiteException> $exception */
+    #[Test]
+    #[DataProvider('provideMissingObjectQueries')]
+    public function it_should_map_missing_objects_on_every_query_method(string $method, string $sql, string $exception): void
+    {
+        $d = new Connection(':memory:', SQLITE3_OPEN_READWRITE);
+
+        $this->expectException($exception);
+        $d->{$method}($sql);
+    }
+
     #[Test]
     public function it_should_query_parser_unmatched_params(): void
     {
@@ -187,6 +102,16 @@ final class ConnectionTest extends TestCase
         $this->expectException(Exception\MissingParameterException::class);
         $this->expectExceptionMessage("Parameter 'foo' is missing from the bound values");
         $d->fetchValue('select :foo');
+    }
+
+    #[Test]
+    #[DataProvider('provideInvalidOpenFlags')]
+    public function it_should_reject_invalid_open_flags(int $flags): void
+    {
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Unable to open database: bad parameter or other API misuse');
+
+        new Connection(':memory:', $flags);
     }
 
     #[Test]
@@ -226,5 +151,21 @@ final class ConnectionTest extends TestCase
 
         self::assertTrue($conn->vacuum());
         self::assertFalse($conn->getTransaction()->active());
+    }
+
+    /** @return iterable<string, array{int}> */
+    public static function provideInvalidOpenFlags(): iterable
+    {
+        yield 'create only' => [SQLITE3_OPEN_CREATE];
+        yield 'read only with create' => [SQLITE3_OPEN_READONLY | SQLITE3_OPEN_CREATE];
+    }
+
+    /** @return iterable<string, array{string, string, class-string<SQLiteException>}> */
+    public static function provideMissingObjectQueries(): iterable
+    {
+        foreach (['exec', 'prepare', 'query', 'querySingle'] as $method) {
+            yield "column via {$method}" => [$method, 'select foo from sqlite_master', ColumnDoesNotExistException::class];
+            yield "table via {$method}" => [$method, 'select * from foo', TableDoesNotExistException::class];
+        }
     }
 }

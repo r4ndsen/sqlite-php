@@ -24,11 +24,6 @@ final class EscapeTraitTest extends TestCase
     public function it_should_escape_columns(): void
     {
         self::assertSame('that``s cool', self::escapeIdentifier('that`s cool'));
-        self::assertSame('that``s cool', self::escapeIdentifier('that`s cool'));
-        self::assertSame('that``s cool', self::escapeIdentifier('that`s cool'));
-
-        self::assertSame('`that``s cool`', self::backtickIdentifier('that`s cool'));
-        self::assertSame('`that``s cool`', self::backtickIdentifier('that`s cool'));
         self::assertSame('`that``s cool`', self::backtickIdentifier('that`s cool'));
     }
 
@@ -39,8 +34,6 @@ final class EscapeTraitTest extends TestCase
         self::assertSame('', $this->escape(''));
 
         self::assertSame("''", self::escapeString("'"));
-        self::assertSame("''", self::escapeString("'"));
-        self::assertSame("'", self::escapeIdentifier("'"));
         self::assertSame("'", self::escapeIdentifier("'"));
     }
 

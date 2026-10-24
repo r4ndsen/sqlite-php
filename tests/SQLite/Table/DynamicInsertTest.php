@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite\Table;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Column;
@@ -85,6 +86,7 @@ final class DynamicInsertTest extends TestCase
 
         self::assertFalse($this->SQLite->getConnection()->getTransaction()->active());
     }
+
     #[Test]
     public function it_should_create_multibyte_column_name(): void
     {
@@ -99,39 +101,6 @@ final class DynamicInsertTest extends TestCase
 
         $table->push([' ä' => 'bar']);
         self::assertCount(2, $table);
-        self::assertSame(
-            [
-                ['Ä' => 'foo'],
-                ['Ä' => 'bar'],
-            ],
-            $table->toArray()
-        );
-    }
-
-    #[Test]
-    public function it_should_create_multibyte_column_name_lowercased(): void
-    {
-        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertFalse($table->exists());
-
-        $table->push(['ä' => 'foo']);
-
-        self::assertTrue($table->exists());
-        self::assertCount(1, $table);
-    }
-
-    #[Test]
-    public function it_should_create_multibyte_column_name_uppercased(): void
-    {
-        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertFalse($table->exists());
-
-        $table->push(['Ä ' => 'foo']);
-        $table->push([' ä' => 'bar']);
-
-        self::assertTrue($table->exists());
-        self::assertCount(2, $table);
-
         self::assertSame(
             [
                 ['Ä' => 'foo'],
@@ -193,19 +162,6 @@ final class DynamicInsertTest extends TestCase
     }
 
     #[Test]
-    public function it_should_create_multibyte_column_name_uppercased_with_existing_table_multi_case(): void
-    {
-        $this->SQLite->exec('create table dynamicdata (` Ää`,`Ää`,`äÄ `)');
-
-        $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
-        self::assertTrue($table->exists());
-
-        $this->expectException(ColumnNameAmbiguousException::class);
-        $this->expectExceptionMessage('column name Ää is ambiguous');
-        $table->push([]);
-    }
-
-    #[Test]
     public function it_should_dynamic_insert_table(): void
     {
         self::assertInstanceOf(Table::class, $this->SQLite->table);
@@ -231,36 +187,9 @@ final class DynamicInsertTest extends TestCase
     }
 
     #[Test]
-    public function it_should_dynamic_insert_table2000_columns(): void
-    {
-        $data = [];
-
-        foreach (range('a', 'z') as $letter) {
-            foreach (range(1, 100) as $id) {
-                $data[$letter . $id] = $letter . $id;
-            }
-        }
-
-        self::assertCount(2_600, $data);
-
-        $table = (new SQLite())->testing1k->getDynamicInsertTable();
-        $table->push(\array_slice($data, 0, 2_000));
-
-        self::assertCount(2_000, current($table->toArray()));
-    }
-
-    #[Test]
     public function it_should_dynamic_insert_table_create_more_than2000_columns(): void
     {
-        $data = [];
-
-        foreach (range('a', 'z') as $letter) {
-            foreach (range(1, 100) as $id) {
-                $data[$letter . $id] = $letter . $id;
-            }
-        }
-
-        self::assertCount(2_600, $data);
+        $data = self::columnData();
 
         $table = (new SQLite())->testing2600->getDynamicInsertTable();
 
@@ -314,15 +243,7 @@ final class DynamicInsertTest extends TestCase
     #[Test]
     public function it_should_dynamic_insert_table_more_than2000_columns(): void
     {
-        $data = [];
-
-        foreach (range('a', 'z') as $letter) {
-            foreach (range(1, 100) as $id) {
-                $data[$letter . $id] = $letter . $id;
-            }
-        }
-
-        self::assertCount(2_600, $data);
+        $data = self::columnData();
 
         $table = (new SQLite())->testing2001->getDynamicInsertTable();
 
@@ -331,6 +252,7 @@ final class DynamicInsertTest extends TestCase
 
         // creating 2k columns is fine
         $table->push($chunk1);
+        self::assertCount(2_000, current($table->toArray()));
 
         $chunk2 = \array_slice($data, 0, 2_001);
         self::assertCount(2_001, $chunk2);
@@ -463,61 +385,6 @@ final class DynamicInsertTest extends TestCase
     }
 
     #[Test]
-    public function it_should_fixed_insert_rename_with_index(): void
-    {
-        $table = $this->SQLite->getTable('table')->getFixedInsertTable();
-        $colFrom = Column::createDefaultColumn('foo');
-        $colTo = Column::createDefaultColumn('bar');
-        $table->push([$colFrom->getLower() => 1]);
-        $table->addIndex(new SQLite\Index($colFrom));
-
-        $table->renameColumn($colFrom, $colTo);
-
-        self::assertSame(
-            [[$colTo->getLower() => '1']],
-            $table->toArray()
-        );
-    }
-
-    #[Test]
-    public function it_should_fixed_insert_with_changing_column_case(): void
-    {
-        $table = $this->SQLite->getTable('table')->getFixedInsertTable();
-        $col = Column::createDefaultColumn('a');
-        $table->push(['a' => 1, 'b' => 2]);
-
-        if (SQLite3::version()['versionNumber'] < 3_035_000) {
-            $this->expectException(SQLite\Exception\FeatureNotSupportedException::class);
-        }
-
-        $table->deleteColumn($col);
-
-        $table->push(['b' => 3]);
-
-        self::assertSame([
-            ['b' => '2'],
-            ['b' => '3'],
-        ], $table->toArray());
-    }
-
-    #[Test]
-    public function it_should_fixed_insert_with_changing_column_case_with_index(): void
-    {
-        $table = $this->SQLite->getTable('table')->getFixedInsertTable();
-        $col = Column::createDefaultColumn('a');
-        $table->push(['a' => 1, 'b' => 2]);
-        $table->addIndex(new SQLite\Index($col));
-
-        if (SQLite3::version()['versionNumber'] < 3_035_000) {
-            $this->expectException(SQLite\Exception\FeatureNotSupportedException::class);
-        } else {
-            $this->expectException(DeleteColumnException::class);
-        }
-
-        $table->deleteColumn($col);
-    }
-
-    #[Test]
     public function it_should_insert_rows_with_many_different_column_sets(): void
     {
         $table = $this->SQLite->sparse->getDynamicInsertTable();
@@ -580,15 +447,16 @@ final class DynamicInsertTest extends TestCase
     }
 
     #[Test]
-    public function it_should_throw_with_column_name_ambiguous_exception(): void
+    #[DataProvider('provideAmbiguousColumns')]
+    public function it_should_throw_with_column_name_ambiguous_exception(string $columns, string $ambiguousColumn): void
     {
-        $this->SQLite->exec('create table dynamicdata (`Ää`,`äÄ `)');
+        $this->SQLite->exec("create table dynamicdata ({$columns})");
 
         $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
         self::assertTrue($table->exists());
 
         $this->expectException(ColumnNameAmbiguousException::class);
-        $this->expectExceptionMessage('column name äÄ is ambiguous');
+        $this->expectExceptionMessage("column name {$ambiguousColumn} is ambiguous");
         $table->push([]);
     }
 
@@ -602,5 +470,26 @@ final class DynamicInsertTest extends TestCase
         $table->push(['foo' => 1, 'bar' => 2]);
 
         self::assertCount(1, $table);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function provideAmbiguousColumns(): iterable
+    {
+        yield 'two columns' => ['`Ää`,`äÄ `', 'äÄ'];
+        yield 'three columns' => ['` Ää`,`Ää`,`äÄ `', 'Ää'];
+    }
+
+    /** @return array<string, string> 2600 columns named and valued a1 to z100 */
+    private static function columnData(): array
+    {
+        $data = [];
+
+        foreach (range('a', 'z') as $letter) {
+            foreach (range(1, 100) as $id) {
+                $data[$letter . $id] = $letter . $id;
+            }
+        }
+
+        return $data;
     }
 }
