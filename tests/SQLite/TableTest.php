@@ -20,6 +20,19 @@ use SQLite3;
 
 final class TableTest extends TestCase
 {
+    // database file of a test, removed after the test
+    private ?string $tempdb = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->tempdb !== null) {
+            // close the connection before deleting the file
+            $this->SQLite = new SQLite();
+            gc_collect_cycles();
+            file_exists($this->tempdb) && unlink($this->tempdb);
+        }
+    }
+
     #[Test]
     public function delete_column_on_non_existing_table_via_perform(): void
     {
@@ -35,7 +48,7 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_add_column(): void
     {
-        @unlink($tempdb = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'temp.sqlite');
+        $tempdb = $this->tempdb = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('table-', true) . '.sqlite';
         $this->SQLite = new SQLite($tempdb);
         $t = $this->SQLite->table;
         $t->addCreateColumn(Column::createDefaultColumn('test'));
@@ -260,6 +273,28 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_allow_subclasses_to_use_the_protected_methods(): void
+    {
+        $table = new class($this->SQLite->getConnection(), 't') extends Table {
+            public function createStatement(): string
+            {
+                return $this->buildCreateStatement();
+            }
+
+            public function rows(): bool
+            {
+                return $this->hasRows();
+            }
+        };
+
+        $table->addCreateColumn(Column::createDefaultColumn('a'));
+        self::assertSame("`a` TEXT default ''", $table->createStatement());
+
+        $table->create();
+        self::assertFalse($table->rows());
+    }
+
+    #[Test]
     public function it_should_columns_with_single_quote(): void
     {
         $tablename = "my ' table";
@@ -342,6 +377,13 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_create_from_array_with_duplicate_column_names(): void
+    {
+        self::assertTrue($this->SQLite->t->createFromArray(['a', 'a']));
+        self::assertSame(['a'], array_keys($this->SQLite->t->columns()));
+    }
+
+    #[Test]
     public function it_should_create_from_array_with_zero_index(): void
     {
         $t = $this->SQLite->table;
@@ -412,12 +454,37 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_find_multibyte_columns_case_insensitively(): void
+    {
+        $this->SQLite->exec('create table t (äpfel)');
+
+        self::assertTrue($this->SQLite->t->columnExists('ÄPFEL'));
+        self::assertSame('äpfel', $this->SQLite->t->getColumnByName(' ÄPFEL ')?->getRaw());
+    }
+
+    #[Test]
     public function it_should_find_tables_case_insensitively(): void
     {
         $this->SQLite->exec('create table Tasks (a)');
 
         self::assertTrue($this->SQLite->getTable('tasks')->exists());
         self::assertCount(1, $this->SQLite->getTable('TASKS')->columns());
+    }
+
+    #[Test]
+    public function it_should_have_no_data_when_the_table_is_empty(): void
+    {
+        $this->SQLite->exec('create table t (a)');
+
+        self::assertFalse($this->SQLite->t->hasData());
+    }
+
+    #[Test]
+    public function it_should_have_no_schema_for_a_view(): void
+    {
+        $this->SQLite->exec('create view v as select 1 as a');
+
+        self::assertSame([], $this->SQLite->v->schema());
     }
 
     #[Test]
@@ -464,6 +531,24 @@ final class TableTest extends TestCase
         $t->exec('delete from `table` where rowid > 3');
         self::assertSame(5, $this->SQLite->lastInsertRowID());
         self::assertSame(3, $this->SQLite->querySingle('select max(rowid) from `table`'));
+    }
+
+    #[Test]
+    public function it_should_limit_the_number_of_prepared_statements(): void
+    {
+        $columns = array_map(static fn (int $i) => 'c' . $i, range(0, 100));
+        $table = $this->SQLite->t;
+        $table->createFromArray($columns);
+
+        foreach ($columns as $column) {
+            $table->push([$column => 1]);
+        }
+
+        // the statements were committed and dropped before preparing the 101st
+        $preparedStatements = $this->getPropertyValue($table, 'preparedStatements');
+        self::assertIsArray($preparedStatements);
+        self::assertCount(1, $preparedStatements);
+        self::assertCount(101, $table);
     }
 
     #[Test]
@@ -550,6 +635,15 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_rename_column(): void
+    {
+        $this->SQLite->exec('create table t (a)');
+
+        self::assertTrue($this->SQLite->t->renameColumn(Column::createDefaultColumn('a'), Column::createDefaultColumn('b')));
+        self::assertSame(['b'], array_keys($this->SQLite->t->columns()));
+    }
+
+    #[Test]
     public function it_should_table_general_methods(): void
     {
         $tableName = 'table';
@@ -584,6 +678,7 @@ final class TableTest extends TestCase
         };
 
         $this->expectException(FeatureNotSupportedException::class);
+        $this->expectExceptionMessage('Drop column syntax can be used from SQLite3 3.35.0 - your version is: ' . SQLite3::version()['versionString']);
         $testDouble->deleteColumn(Column::createDefaultColumn('test'));
     }
 

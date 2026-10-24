@@ -43,6 +43,19 @@ final class QueryExceptionHandlerTest extends TestCase
         }
     }
 
+    #[Test]
+    #[DataProvider('providesPrefixedErrors')]
+    public function it_does_not_map_errors_with_an_unexpected_prefix(string $message): void
+    {
+        $handler = new QueryExceptionHandler($this->connection);
+
+        try {
+            $handler->handle(new RuntimeException($message), 'select 1');
+        } catch (SQLiteException $exception) {
+            self::assertSame(QueryException::class, $exception::class);
+        }
+    }
+
     /**
      * @param class-string<SQLiteException>       $expectedException
      * @param callable(SQLiteException):void|null $extraAssertions
@@ -151,5 +164,13 @@ final class QueryExceptionHandlerTest extends TestCase
             ViewConstraintException::class,
             static fn (ViewConstraintException $exception) => self::assertSame('example_view', $exception->getViewName()),
         ];
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function providesPrefixedErrors(): iterable
+    {
+        yield 'unique constraint' => ['prefix UNIQUE constraint failed: foo'];
+        yield 'no such table via prepare' => ['prefix Unable to prepare statement: no such table: foo'];
+        yield 'no such column via prepare' => ['prefix Unable to prepare statement: no such column: baz'];
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite\Traits;
 
 use PHPUnit\Framework\Attributes\Test;
+use r4ndsen\SQLite\Column;
 use r4ndsen\SQLite\TestCase;
 
 final class EscapeTraitTest extends TestCase
@@ -41,6 +42,15 @@ final class EscapeTraitTest extends TestCase
         self::assertSame("''", self::escapeString("'"));
         self::assertSame("'", self::escapeIdentifier("'"));
         self::assertSame("'", self::escapeIdentifier("'"));
+    }
+
+    #[Test]
+    public function it_should_escape_statically_from_outside(): void
+    {
+        self::assertSame('`a``b`', Column::backtickIdentifier('a`b'));
+        self::assertSame('`a`', Column::backtickString('a'));
+        self::assertSame('a``b', Column::escapeIdentifier('a`b'));
+        self::assertSame("a''b", Column::escapeString("a'b"));
     }
 
     #[Test]

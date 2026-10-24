@@ -21,6 +21,15 @@ final class ColumnExceptionTest extends TestCase
     }
 
     #[Test]
+    public function it_names_the_ambiguous_column(): void
+    {
+        $exception = new ColumnNameAmbiguousException(' My Column ');
+
+        self::assertSame('column name My Column is ambiguous', $exception->getMessage());
+        self::assertSame(0, $exception->getCode());
+    }
+
+    #[Test]
     public function it_preserves_previous_exception_code(): void
     {
         $previous = new RuntimeException('boom', 123);

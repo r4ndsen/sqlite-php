@@ -43,10 +43,7 @@ class AttachmentHandler
      */
     public function attach(string $path, string $identifier): bool
     {
-        if ($this->has($identifier)) {
-            throw new AttachedDatabaseException(sprintf('database %s is already in use', $identifier));
-        }
-
+        // SQLite itself refuses an identifier already in use
         try {
             $sql = sprintf(
                 "attach '%s' as '%s'",

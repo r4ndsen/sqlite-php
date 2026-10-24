@@ -58,9 +58,10 @@ class Table implements Countable, IteratorAggregate, Stringable
     protected array $createConstraints = [];
 
     /**
-     * Prepared insert statements by their column list, utilized by push() and pushWithoutKeys().
+     * Prepared insert statements utilized by push() and pushWithoutKeys(),
+     * by their serialized column list or by their number of values respectively.
      *
-     * @var array<string, PreparedStatement>
+     * @var array<int|string, PreparedStatement>
      */
     protected array $preparedStatements = [];
 
@@ -192,10 +193,6 @@ class Table implements Countable, IteratorAggregate, Stringable
      */
     public function createFromArray(array $columnNames): bool
     {
-        if ($this->exists()) {
-            throw new TableAlreadyCreatedException($this->name);
-        }
-
         $this->createColumns = [];
 
         foreach (array_unique($columnNames) as $columnName) {
@@ -345,7 +342,7 @@ class Table implements Countable, IteratorAggregate, Stringable
             }
         }
 
-        return $this->insert($columns, array_values($data));
+        return $this->insert($columns, $data);
     }
 
     /**
@@ -355,19 +352,19 @@ class Table implements Countable, IteratorAggregate, Stringable
      */
     public function pushWithoutKeys(array $data): static
     {
-        $key = '#' . \count($data);
+        $key = \count($data);
 
         if (!isset($this->preparedStatements[$key])) {
             $this->preparedStatements[$key] = $this->prepareInsert(
                 sprintf(
                     'insert into %s values (%s)',
                     $this,
-                    implode(',', array_fill(0, \count($data), '?'))
+                    rtrim(str_repeat('?,', $key), ',')
                 )
             );
         }
 
-        $this->preparedStatements[$key]->bind(array_values($data));
+        $this->preparedStatements[$key]->bind($data);
 
         return $this;
     }
@@ -481,14 +478,14 @@ class Table implements Countable, IteratorAggregate, Stringable
      * Inserts the values into the given columns, columns left out get their default value.
      *
      * @param list<int|string> $columns
-     * @param list<mixed>      $values
+     * @param array<mixed>     $values  bound in their order, the keys are ignored
      *
      * @throws SQLiteException
      */
     protected function insert(array $columns, array $values): static
     {
         if ($columns !== $this->lastInsertColumns || !isset($this->preparedStatements[$this->lastInsertKey])) {
-            $key = \count($columns) . ':' . implode("\0", $columns);
+            $key = serialize($columns);
 
             if (!isset($this->preparedStatements[$key])) {
                 if ($columns === []) {
@@ -498,7 +495,7 @@ class Table implements Countable, IteratorAggregate, Stringable
                         'insert into %s (%s) values (%s)',
                         $this,
                         implode(',', array_map(static fn ($column) => Column::createDefaultColumn((string) $column), $columns)),
-                        implode(',', array_fill(0, \count($columns), '?'))
+                        rtrim(str_repeat('?,', \count($columns)), ',')
                     );
                 }
 

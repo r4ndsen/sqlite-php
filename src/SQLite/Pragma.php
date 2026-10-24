@@ -46,20 +46,15 @@ final class Pragma implements Constant
     public function __set(string $key, mixed $value): void
     {
         if (strtolower($key) === Constant::SYNCHRONOUS) {
-            $value instanceof Synchronous || $value = Synchronous::fromString($value);
-            $this->setSynchronous($value);
+            $this->setSynchronous($value instanceof Synchronous ? $value : Synchronous::fromString($value));
         } elseif (strtolower($key) === Constant::JOURNAL_MODE) {
-            $value instanceof JournalMode || $value = JournalMode::fromString($value);
-            $this->setJournalMode($value);
+            $this->setJournalMode($value instanceof JournalMode ? $value : JournalMode::fromString($value));
         } elseif (strtolower($key) === Constant::LOCKING_MODE) {
-            $value instanceof LockingMode || $value = LockingMode::fromString($value);
-            $this->setLockingMode($value);
+            $this->setLockingMode($value instanceof LockingMode ? $value : LockingMode::fromString($value));
         } elseif (strtolower($key) === Constant::TEMP_STORE) {
-            $value instanceof TempStore || $value = TempStore::fromString($value);
-            $this->setTempStore($value);
+            $this->setTempStore($value instanceof TempStore ? $value : TempStore::fromString($value));
         } elseif (strtolower($key) === Constant::ENCODING) {
-            $value instanceof Encoding || $value = Encoding::fromString($value);
-            $this->setEncoding($value);
+            $this->setEncoding($value instanceof Encoding ? $value : Encoding::fromString($value));
         } else {
             $this->set($key, $value);
         }

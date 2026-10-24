@@ -11,6 +11,7 @@ use r4ndsen\SQLite\Exception\BindValueException;
 use r4ndsen\SQLite\Exception\MissingParameterException;
 use r4ndsen\SQLite\Exception\QueryException;
 use r4ndsen\SQLite\Exception\SyntaxErrorException;
+use r4ndsen\SQLite\Exception\TableDoesNotExistException;
 use stdClass;
 use Stringable;
 
@@ -72,6 +73,14 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
+    public function it_should_bind_types_in_their_order_regardless_of_their_keys(): void
+    {
+        $stm = $this->SQLite->prepare('select typeof(?)');
+
+        self::assertSame(['text'], $stm->bind([5], ['first' => SQLITE3_TEXT])->fetchArray(SQLITE3_NUM));
+    }
+
+    #[Test]
     public function it_should_bind_value_exception(): void
     {
         $content = Column::createDefaultColumn('content');
@@ -103,6 +112,45 @@ final class PreparedStatementTest extends TestCase
 
         self::assertSame(1, $this->SQLite->fetchValue('select count(*) from flags where done = :done', ['done' => false]));
         self::assertSame('integer', $this->SQLite->fetchValue('select typeof(raw) from flags'));
+    }
+
+    #[Test]
+    public function it_should_commit_every_commit_modulo_executions(): void
+    {
+        $path = $this->createDatabasePath();
+        $sqlite = new SQLite($path);
+        $sqlite->exec('create table test (id)');
+
+        $stm = $sqlite->prepare('insert into test (id) values (?)')
+            ->activateTransaction()
+            ->setCommitModulo(2)
+        ;
+
+        $stm->bind([1]);
+        self::assertCount(0, (new SQLite($path))->test);
+
+        $stm->bind([2]);
+        self::assertCount(2, (new SQLite($path))->test);
+
+        $stm->bind([3]);
+        self::assertCount(2, (new SQLite($path))->test);
+
+        $stm->bind([4]);
+        self::assertCount(4, (new SQLite($path))->test);
+    }
+
+    #[Test]
+    public function it_should_commit_when_deactivating_the_transaction(): void
+    {
+        $this->SQLite->exec('create table test (id)');
+        $transaction = $this->SQLite->getConnection()->getTransaction();
+
+        $stm = $this->SQLite->prepare('insert into test (id) values (?)')->activateTransaction();
+        $stm->bind([1]);
+        self::assertTrue($transaction->active());
+
+        $stm->deactivateTransaction();
+        self::assertFalse($transaction->active());
     }
 
     #[Test]
@@ -189,6 +237,14 @@ final class PreparedStatementTest extends TestCase
         unset($table);
 
         self::assertCount(3, $sqlite->test);
+    }
+
+    #[Test]
+    public function it_should_deactivate_an_inactive_transaction(): void
+    {
+        $stm = $this->SQLite->prepare('select 1');
+
+        self::assertSame($stm, $stm->deactivateTransaction());
     }
 
     #[Test]
@@ -283,6 +339,25 @@ final class PreparedStatementTest extends TestCase
         $row = $statement->bindAssoc(['blob' => "a\0b", 'text' => "a\0b"], ['blob' => SQLITE3_BLOB])->fetchArray(SQLITE3_ASSOC);
 
         self::assertSame(['blob' => "a\0b", 'text' => 'ab'], $row);
+    }
+
+    #[Test]
+    public function it_should_keep_the_exception_of_a_failed_prepare(): void
+    {
+        $this->expectException(TableDoesNotExistException::class);
+
+        $this->SQLite->prepare('select * from missing')->execute();
+    }
+
+    #[Test]
+    public function it_should_name_null_in_bind_value_exception(): void
+    {
+        $stm = $this->SQLite->prepare($sql = 'select :c');
+
+        $this->expectException(BindValueException::class);
+        $this->expectExceptionMessage("Could not bind value: NULL to key: '0' on: " . $sql);
+
+        $stm->bindAssoc([null]);
     }
 
     #[Test]

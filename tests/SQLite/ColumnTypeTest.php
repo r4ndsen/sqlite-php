@@ -34,6 +34,7 @@ final class ColumnTypeTest extends TestCase
         yield 'integer anywhere in the name' => ['UNSIGNED BIG INT', ColumnType::INTEGER];
         yield 'double affinity' => ['DOUBLE PRECISION', ColumnType::REAL];
         yield 'no type' => ['', ColumnType::BLOB];
+        yield 'whitespace only' => ['  ', ColumnType::BLOB];
         yield 'numeric fallback' => ['string', ColumnType::NUMERIC];
     }
 }

@@ -1,0 +1,47 @@
+{
+    "timeout": 10,
+    "source": {
+        "directories": [
+            "src"
+        ]
+    },
+    "logs": {
+        "html": "build/infection.html"
+    },
+    "mutators": {
+        "@default": true,
+        // equivalent mutants, no test can tell them apart from the original code
+        "CastArray": {
+            "ignore": [
+                // preg_split() only returns false on an invalid pattern
+                "r4ndsen\\SQLite\\QueryParser::rebuildPart"
+            ]
+        },
+        "DecrementInteger": {
+            "ignore": [
+                // count(*) is never negative, max() only narrows the type
+                "r4ndsen\\SQLite\\Table::count"
+            ]
+        },
+        "Foreach_": {
+            "ignore": [
+                // dropping the prepared statements commits them in their destructor
+                "r4ndsen\\SQLite\\Table::commit"
+            ]
+        },
+        "MethodCallRemoval": {
+            "ignore": [
+                // PHP resets the statement anyway once the result is released
+                "r4ndsen\\SQLite\\Traits\\QueryTrait::fetchArray",
+                // dropping the prepared statements commits them in their destructor
+                "r4ndsen\\SQLite\\Table::commit"
+            ]
+        },
+        "UnwrapFinally": {
+            "ignore": [
+                // PHP resets the statement anyway once the result is released
+                "r4ndsen\\SQLite\\Traits\\QueryTrait::fetchArray"
+            ]
+        }
+    }
+}

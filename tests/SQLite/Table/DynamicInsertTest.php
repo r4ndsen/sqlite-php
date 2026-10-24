@@ -32,6 +32,59 @@ final class DynamicInsertTest extends TestCase
             ['a' => '', 'b' => '3'],
         ], $table->toArray());
     }
+
+    #[Test]
+    public function it_should_add_the_old_column_again_after_renaming_it(): void
+    {
+        $table = $this->SQLite->getTable('test')->getDynamicInsertTable();
+        $table->push(['a' => 1]);
+
+        $table->renameColumn(Column::createDefaultColumn('a'), Column::createDefaultColumn('b'));
+        $table->push(['a' => 2]);
+
+        self::assertSame([['b' => '1', 'a' => ''], ['b' => '', 'a' => '2']], $table->toArray());
+    }
+
+    #[Test]
+    public function it_should_allow_subclasses_to_use_the_column_case_map(): void
+    {
+        $this->SQLite->exec('create table test (A)');
+
+        $table = new class($this->SQLite->getConnection(), 'test') extends DynamicInsert {
+            /** @return array<string, string> */
+            public function caseMap(): array
+            {
+                $map = $this->initializeColumnCaseMap();
+                $this->seenColumn('B');
+                $this->reset();
+
+                return $map;
+            }
+
+            public function realColumn(string $columnName): void
+            {
+                $this->initializeColumnCaseMap();
+                $this->seenRealColumn($columnName);
+            }
+        };
+
+        self::assertSame(['rowid' => 'rowid', 'a' => 'A', 'A' => 'A'], $table->caseMap());
+
+        $this->expectException(ColumnNameAmbiguousException::class);
+        $table->realColumn(' a ');
+    }
+
+    #[Test]
+    public function it_should_commit_the_transaction_when_dropping_the_table(): void
+    {
+        $table = $this->SQLite->getTable('test')->getDynamicInsertTable();
+        $table->push(['a' => 1]);
+        self::assertTrue($this->SQLite->getConnection()->getTransaction()->active());
+
+        $table->drop();
+
+        self::assertFalse($this->SQLite->getConnection()->getTransaction()->active());
+    }
     #[Test]
     public function it_should_create_multibyte_column_name(): void
     {

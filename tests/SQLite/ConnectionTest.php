@@ -10,6 +10,7 @@ use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
 use r4ndsen\SQLite\Exception\DatabaseException;
 use r4ndsen\SQLite\Exception\QueryException;
 use r4ndsen\SQLite\Exception\TableDoesNotExistException;
+use r4ndsen\SQLite\Exception\UniqueConstraintException;
 use Throwable;
 
 final class ConnectionTest extends TestCase
@@ -189,9 +190,41 @@ final class ConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_should_report_extended_result_codes(): void
+    {
+        $conn = new Connection();
+        $conn->exec('create table t (a unique)');
+        $conn->exec('insert into t values (1)');
+
+        try {
+            $conn->exec('insert into t values (1)');
+            self::fail('The insert should violate the unique constraint');
+        } catch (UniqueConstraintException) {
+            // instead of the primary result code SQLITE_CONSTRAINT
+            self::assertSame(ErrorCode::SQLITE_CONSTRAINT_UNIQUE->value, $conn->lastErrorCode());
+        }
+    }
+
+    #[Test]
+    public function it_should_return_the_first_value_with_query_single_by_default(): void
+    {
+        self::assertSame(1, (new Connection())->querySingle('select 1 as a'));
+    }
+
+    #[Test]
     public function it_should_throw_database_exception_when_file_is_not_a_database(): void
     {
         $this->expectException(DatabaseException::class);
         (new SQLite(__FILE__))->getAllTables();
+    }
+
+    #[Test]
+    public function it_should_vacuum_while_a_transaction_is_open(): void
+    {
+        $conn = new Connection();
+        $conn->getTransaction()->begin();
+
+        self::assertTrue($conn->vacuum());
+        self::assertFalse($conn->getTransaction()->active());
     }
 }

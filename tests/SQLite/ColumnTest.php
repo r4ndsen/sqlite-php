@@ -115,6 +115,14 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
+    public function it_should_create_not_null_column_from_schema(): void
+    {
+        $column = Column::createFromSchema(new ColumnSchema(0, 'a', 'text', 1, null, 0));
+
+        self::assertSame('`a` TEXT default null NOT NULL', $column->getCreateStatement());
+    }
+
+    #[Test]
     public function it_should_create_text_column_with_float_default_value(): void
     {
         $a = Column::createTextColumn('testA', (string) M_PI);
@@ -264,6 +272,12 @@ final class ColumnTest extends TestCase
         $c = Column::createDefaultColumn('TeSt 123');
 
         self::assertSame('TeSt 123', $c->getPlain());
+    }
+
+    #[Test]
+    public function it_should_get_trimmed_escaped(): void
+    {
+        self::assertSame('`a``b`', (new Column(' a`b '))->getTrimmedEscaped());
     }
 
     #[Test]
