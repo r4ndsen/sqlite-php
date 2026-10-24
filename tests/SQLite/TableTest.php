@@ -409,6 +409,44 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_count_rows_with_rowid_zero(): void
+    {
+        $this->SQLite->exec('create table t (a)');
+        $this->SQLite->exec("insert into t (rowid, a) values (0, 'x')");
+
+        self::assertCount(1, $this->SQLite->t);
+        self::assertTrue($this->SQLite->t->hasData());
+    }
+
+    #[Test]
+    public function it_should_count_rows_of_tables_without_rowid(): void
+    {
+        $this->SQLite->exec('create table t (a primary key) without rowid');
+        $this->SQLite->exec("insert into t values ('x')");
+
+        self::assertCount(1, $this->SQLite->t);
+        self::assertSame(0, $this->SQLite->t->maxRow());
+    }
+
+    #[Test]
+    public function it_should_find_tables_case_insensitively(): void
+    {
+        $this->SQLite->exec('create table Tasks (a)');
+
+        self::assertTrue($this->SQLite->getTable('tasks')->exists());
+        self::assertCount(1, $this->SQLite->getTable('TASKS')->columns());
+    }
+
+    #[Test]
+    public function it_should_not_list_internal_tables(): void
+    {
+        $this->SQLite->exec('create table t (id integer primary key autoincrement)');
+        $this->SQLite->exec('insert into t default values');
+
+        self::assertSame(['t'], array_map(static fn (Table $table) => $table->getName(), $this->SQLite->getAllTables()));
+    }
+
+    #[Test]
     public function it_should_drop_table(): void
     {
         self::assertTrue($this->SQLite->getTable('table')->drop());

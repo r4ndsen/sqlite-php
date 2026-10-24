@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use IteratorAggregate;
 use r4ndsen\SQLite\ColumnFactory\ColumnFactory;
 use r4ndsen\SQLite\ColumnFactory\ColumnFactoryInterface;
+use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
 use r4ndsen\SQLite\Exception\CreateTableFailedException;
 use r4ndsen\SQLite\Exception\DeleteColumnException;
 use r4ndsen\SQLite\Exception\FeatureNotSupportedException;
@@ -124,12 +125,7 @@ class Table implements Countable, IteratorAggregate, Stringable
     /** @throws SQLiteException */
     public function addIndex(Index $index): bool
     {
-        return $this->exec(
-            sprintf(
-                $index->getCreateStatement(),
-                $this
-            )
-        );
+        return $this->exec($index->getCreateStatement($this));
     }
 
     public function columnExists(string $name): bool
@@ -158,12 +154,11 @@ class Table implements Countable, IteratorAggregate, Stringable
     /** @return int<0, max> */
     public function count(): int
     {
-        if (!$this->hasData()) {
+        try {
+            return max(0, (int) $this->fetchValue('select count(*) from ' . $this));
+        } catch (TableDoesNotExistException) {
             return 0;
         }
-
-        /** @phpstan-ignore return.type */
-        return $this->querySingle('select count(*) from ' . $this);
     }
 
     /**
@@ -264,7 +259,7 @@ class Table implements Countable, IteratorAggregate, Stringable
                     `sqlite_master`
                 where
                     `type` = 'table' and
-                    `name` = ?";
+                    `name` = ? collate nocase";
 
         return (bool) $this->fetchValue($sql, [$this->name]);
     }
@@ -324,8 +319,9 @@ class Table implements Countable, IteratorAggregate, Stringable
         $sql = sprintf('select max(%s) from %s', Column::ROWID, $this);
 
         try {
-            return (int) $this->querySingle($sql);
-        } catch (TableDoesNotExistException) {
+            return (int) $this->fetchValue($sql);
+        } catch (TableDoesNotExistException|ColumnDoesNotExistException) {
+            // the table does not exist or has no rowid
             return 0;
         }
     }
@@ -531,12 +527,6 @@ class Table implements Countable, IteratorAggregate, Stringable
     /** @throws SQLiteException */
     protected function hasRows(): bool
     {
-        return (bool) $this->querySingle(
-            sprintf(
-                'select %s from %s limit 1',
-                Column::ROWID,
-                $this
-            )
-        );
+        return (bool) $this->fetchValue('select exists(select 1 from ' . $this . ')');
     }
 }

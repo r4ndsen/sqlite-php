@@ -121,10 +121,14 @@ final class Pragma implements Constant
         );
     }
 
-    /** @return string[] */
+    /**
+     * Names of the tables, without SQLite's internal tables like sqlite_sequence.
+     *
+     * @return string[]
+     */
     public function getTableNames(): array
     {
-        return $this->fetchCol("select `name` from `sqlite_master` where `type` = 'table'");
+        return $this->fetchCol("select `name` from `sqlite_master` where `type` = 'table' and `name` not like 'sqlite\\_%' escape '\\'");
     }
 
     public function getTempStore(): TempStore

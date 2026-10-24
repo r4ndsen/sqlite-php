@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use BadMethodCallException;
+use r4ndsen\SQLite\Traits\EscapeTrait;
 
 class Index
 {
+    use EscapeTrait;
+
     public const UNIQUE = 'unique';
 
-    private string $genericName;
+    /** @var Column[] */
     private array $indexedColumns = [];
     private string $name;
     private string $unique = '';
@@ -25,16 +28,16 @@ class Index
 
     public function addIndexedColumn(Column $column): self
     {
-        if (!isset($this->genericName)) {
-            $this->setGenericName($column);
-        }
-
         $this->indexedColumns[] = $column;
 
         return $this;
     }
 
-    public function getCreateStatement(): string
+    /**
+     * Without a name set, an index on a single column is named after its table and column (e.g. `tasks_title`),
+     * as index names have to be unique across all tables of the database.
+     */
+    public function getCreateStatement(Table|string $table): string
     {
         if (!$this->indexedColumns) {
             throw new BadMethodCallException('No index columns defined, use addIndexedColumn()');
@@ -44,11 +47,14 @@ class Index
             throw new BadMethodCallException('You are using multiple index columns. Please choose an index name: setName()');
         }
 
+        $tableName = trim($table instanceof Table ? $table->getName() : $table);
+
         return 'create ' . trim(
             sprintf(
-                '%s index if not exists %s on %%s (%s) %s',
+                '%s index if not exists %s on %s (%s) %s',
                 $this->unique,
-                $this->getName(),
+                $this->name ?? self::backtickIdentifier(mb_strtolower($tableName . '_' . $this->indexedColumns[0]->getTrimmed(), 'UTF-8')),
+                self::backtickIdentifier($tableName),
                 implode(', ', $this->indexedColumns),
                 $this->where
             )
@@ -82,15 +88,4 @@ class Index
         return $this;
     }
 
-    private function getName(): string
-    {
-        return $this->name ?? $this->genericName;
-    }
-
-    private function setGenericName(Column $column): self
-    {
-        $this->genericName = $column->getLowerTrimmedEscaped();
-
-        return $this;
-    }
 }
