@@ -26,7 +26,7 @@ final readonly class QueryExceptionHandler
         if (str_ends_with($e->getMessage(), 'syntax error')) {
             $this->throw(new SyntaxErrorException($sql, $e));
         }
-        if (preg_match('/^Unable to (?:prepare|execute) statement: UNIQUE constraint failed/', $e->getMessage())) {
+        if (preg_match('/^(?:Unable to (?:prepare|execute) statement: )?UNIQUE constraint failed/', $e->getMessage())) {
             $this->throw(UniqueConstraintException::from($e));
         }
         if (preg_match('/^Unable to prepare statement:(?: 1,)? no such table: (?<table>.+)$/', $e->getMessage(), $m)) {
