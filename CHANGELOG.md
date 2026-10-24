@@ -1,4 +1,5 @@
-[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.4...HEAD
+[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/r4ndsen/sqlite-php/compare/1.0.4...1.1.0
 [1.0.4]: https://github.com/r4ndsen/sqlite-php/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/r4ndsen/sqlite-php/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/r4ndsen/sqlite-php/compare/1.0.1...1.0.2
@@ -10,6 +11,8 @@
 All notable changes to this project will be listed in this file.
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-10-24
 
 ### Removed
 - PHP 8.2 is no longer supported, the library requires PHP 8.3 or later.
