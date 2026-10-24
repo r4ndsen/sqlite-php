@@ -1,4 +1,5 @@
-[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.2...HEAD
+[1.0.2]: https://github.com/r4ndsen/sqlite-php/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/r4ndsen/sqlite-php/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/r4ndsen/sqlite-php/commits/1.0.0
 
@@ -7,6 +8,22 @@
 All notable changes to this project will be listed in this file.
 
 ## [Unreleased]
+
+## [1.0.2] - 2026-10-24
+
+### Changed
+- `attach()` leaves the check for an identifier already in use to SQLite. The
+  message stays the same, the `AttachedDatabaseException` now carries SQLite's
+  error as previous exception.
+- Lowering the commit modulo of a prepared statement below the number of
+  executions since the last commit commits on the next execution, instead of
+  waiting for the next multiple of the modulo.
+- The Infection configuration is `infection.json5.dist`, so the ignored
+  equivalent mutants can name their reason. All mutants are killed.
+
+### Fixed
+- Tests no longer share fixed database file names, which made parallel
+  mutation testing runs kill or spare mutants at random.
 
 ## [1.0.1] - 2026-10-24
 
