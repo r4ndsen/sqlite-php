@@ -89,4 +89,20 @@ final class IndexTest extends TestCase
 
         self::assertSame('create unique index if not exists `name 1 2` on `t` (`id`, `id2`) where 1=1', $index->getCreateStatement('t'));
     }
+
+    #[Test]
+    public function it_should_lower_multibyte_characters_in_the_index_name(): void
+    {
+        $index = new Index(Column::createDefaultColumn('Ä'));
+
+        self::assertSame('create index if not exists `ö_ä` on `Ö` (`Ä`)', $index->getCreateStatement('Ö'));
+    }
+
+    #[Test]
+    public function it_should_trim_the_table_name(): void
+    {
+        $index = new Index(Column::createDefaultColumn('a'));
+
+        self::assertSame('create index if not exists `t_a` on `t` (`a`)', $index->getCreateStatement(' t '));
+    }
 }

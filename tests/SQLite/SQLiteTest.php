@@ -15,6 +15,13 @@ final class SQLiteTest extends TestCase
     private const FIXTURES_DIR = __DIR__ . '/../fixtures';
 
     #[Test]
+    public function it_should_check_pragma_with_isset_case_insensitively(): void
+    {
+        self::assertTrue(isset($this->SQLite->PRAGMA));
+        self::assertInstanceOf(Pragma::class, $this->SQLite->PRAGMA);
+    }
+
+    #[Test]
     public function it_should_check_tables_with_isset(): void
     {
         $this->SQLite->exec('create table t (a)');
@@ -98,6 +105,39 @@ final class SQLiteTest extends TestCase
             unset($sqlite);
             unlink($path);
         }
+    }
+
+    #[Test]
+    public function it_should_load_fresh_tables_after_refresh(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sqlite');
+        self::assertIsString($path);
+
+        try {
+            $sqlite = new SQLite($path);
+            $sqlite->exec('create table foo (a)');
+            self::assertCount(1, $sqlite->foo->columns());
+
+            (new SQLite($path))->exec('alter table foo add column b');
+            $sqlite->refresh();
+
+            self::assertCount(2, $sqlite->foo->columns());
+        } finally {
+            // close the connection before deleting the file
+            unset($sqlite);
+            unlink($path);
+        }
+    }
+
+    #[Test]
+    public function it_should_load_fresh_tables_with_get_all_tables(): void
+    {
+        $this->SQLite->exec('create table foo (a)');
+        self::assertCount(1, $this->SQLite->foo->columns());
+
+        $this->SQLite->exec('alter table foo add column b');
+
+        self::assertCount(2, $this->SQLite->getAllTables()[0]->columns());
     }
 
     #[Test]

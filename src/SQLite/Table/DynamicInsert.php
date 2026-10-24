@@ -113,31 +113,21 @@ class DynamicInsert extends Table
     /** @throws SQLiteException */
     protected function insertRow(array $row): static
     {
-        return $this->insert(array_keys($row), array_values($row));
+        return $this->insert(array_keys($row), $row);
     }
 
     protected function isKnownColumn(string $columnName): bool
     {
-        if (isset($this->columnCaseMap[$columnName])) {
-            return true;
-        }
+        if (!isset($this->columnCaseMap[$columnName])) {
+            // it may be a new spelling of a known column
+            if (!isset($this->columnCaseMap[trim($this->lower($columnName))])) {
+                return false;
+            }
 
-        $lowerColumnName = $this->lower($columnName);
-
-        if (isset($this->columnCaseMap[$lowerColumnName])) {
             $this->seenColumn($columnName);
-
-            return true;
         }
 
-        $trimColumnName = trim($lowerColumnName);
-        if (isset($this->columnCaseMap[$trimColumnName])) {
-            $this->seenColumn($columnName);
-
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     protected function reset(): void
@@ -150,21 +140,16 @@ class DynamicInsert extends Table
      * signalize we have come across that column.
      * this is used to store the first case occurring in the table.
      * otherwise sqlite cannot deal with multibyte column names very well.
+     *
+     * A column is stored by its plain, lowered and lowered+trimmed name,
+     * so whenever a lowered name is known, its trimmed form points to the same column.
      */
     protected function seenColumn(string $plainColumnName): void
     {
         $lowerColumnName = $this->lower($plainColumnName);
-
-        // it's a partially known column, we saw it lowered
-        if (isset($this->columnCaseMap[$lowerColumnName])) {
-            $this->columnCaseMap[$plainColumnName] = $this->columnCaseMap[$lowerColumnName];
-
-            return;
-        }
-
         $trimColumnName = trim($lowerColumnName);
 
-        // it's a partially known column, we saw it lowered+trimmed
+        // it's a partially known column, we saw it lowered and/or trimmed
         if (isset($this->columnCaseMap[$trimColumnName])) {
             $this->columnCaseMap[$plainColumnName] = $this->columnCaseMap[$trimColumnName];
 
@@ -180,14 +165,7 @@ class DynamicInsert extends Table
     /** @throws ColumnNameAmbiguousException */
     protected function seenRealColumn(string $columnName): void
     {
-        $lowerColumnName = $this->lower($columnName);
-
-        if (isset($this->columnCaseMap[$lowerColumnName])) {
-            throw new ColumnNameAmbiguousException($columnName);
-        }
-
-        $trimColumnName = trim($lowerColumnName);
-        if (isset($this->columnCaseMap[$trimColumnName])) {
+        if (isset($this->columnCaseMap[trim($this->lower($columnName))])) {
             throw new ColumnNameAmbiguousException($columnName);
         }
 

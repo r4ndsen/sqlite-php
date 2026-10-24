@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace r4ndsen\SQLite\Traits;
 
+use Error;
 use Generator;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,6 +23,16 @@ final class QueryTraitTest extends TestCase
     use QueryTrait;
 
     #[Test]
+    public function it_should_assign_dynamic_properties_without_deprecation(): void
+    {
+        error_clear_last();
+
+        $this->SQLite->fetchObjects('select 1 as id', class: WithNoConstructor::class);
+
+        self::assertNull(error_get_last());
+    }
+
+    #[Test]
     public function it_should_exec_exception(): void
     {
         $this->expectException(QueryException::class);
@@ -34,6 +45,15 @@ final class QueryTraitTest extends TestCase
     public function it_should_fetch_all_empty_database(): void
     {
         self::assertSame([], $this->SQLite->fetchAll('select * from sqlite_master'));
+    }
+
+    #[Test]
+    public function it_should_fetch_all_instances_of_a_class_without_constructor(): void
+    {
+        $instances = $this->SQLite->fetchInstances('select 1 as id union all select 2', [], WithNoConstructor::class);
+
+        self::assertCount(2, $instances);
+        self::assertSame([1, 2], array_map(static fn (object $instance) => $instance->id ?? null, $instances));
     }
 
     #[Test]
@@ -329,6 +349,25 @@ final class QueryTraitTest extends TestCase
     }
 
     #[Test]
+    public function it_should_restore_the_error_handler_when_assigning_a_property_fails(): void
+    {
+        $handler = static fn () => false;
+        set_error_handler($handler);
+
+        try {
+            $this->SQLite->fetchObjects('select 1 as id', class: ReadonlyWithoutProperties::class);
+            self::fail('Readonly classes do not allow dynamic properties');
+        } catch (Error) {
+            $current = set_error_handler(null);
+            restore_error_handler();
+
+            self::assertSame($handler, $current);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    #[Test]
     public function it_should_view_on_deleted_table(): void
     {
         $this->SQLite->data->createFromArray(['id', 'title']);
@@ -356,6 +395,18 @@ final class QueryTraitTest extends TestCase
         $this->SQLite->exec('drop table `data`');
         $this->SQLite->exec('drop view `testview`');
         self::assertTrue($this->SQLite->exec('alter table `tempdata` rename to `data`'));
+    }
+
+    #[Test]
+    public function it_should_yield_directly_from_the_generators(): void
+    {
+        $sql = "select 'a', 1 union all select 'b', 2";
+
+        self::assertSame(['a', 'b'], iterator_to_array($this->SQLite->yieldCol($sql)));
+        self::assertSame(['a' => 1, 'b' => 2], iterator_to_array($this->SQLite->yieldPairs($sql)));
+        self::assertSame([['a', 1], ['b', 2]], iterator_to_array($this->SQLite->yieldPlain($sql)));
+        self::assertCount(2, iterator_to_array($this->SQLite->yieldInstances($sql)));
+        self::assertCount(2, iterator_to_array($this->SQLite->yieldObjects($sql)));
     }
 
     #[Test]
@@ -402,6 +453,10 @@ final class QueryTraitTest extends TestCase
 
         self::assertSame([], $this->SQLite->fetchPlain('select 1 where 1 = 2'));
     }
+}
+
+final readonly class ReadonlyWithoutProperties
+{
 }
 
 class WithPrivateConstructor

@@ -12,6 +12,7 @@ use r4ndsen\SQLite\PreparedStatement;
 use r4ndsen\SQLite\QueryParser;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
 use SQLite3Result;
 use stdClass;
 
@@ -162,7 +163,7 @@ trait QueryTrait
 
     public function fetchPlain(string $sql, array $bind = []): array
     {
-        return iterator_to_array($this->yieldPlain($sql, $bind), false);
+        return iterator_to_array($this->yieldPlain($sql, $bind));
     }
 
     /**
@@ -302,10 +303,10 @@ trait QueryTrait
             if ($reflectionClass->isInstantiable()) {
                 $object = $reflectionClass->newInstanceArgs($cArgs);
             } else {
-                $constructor = $reflectionClass->getConstructor();
+                // the class has a non-public constructor
                 $object = $reflectionClass->newInstanceWithoutConstructor();
 
-                $constructor?->invokeArgs($object, $cArgs);
+                (new ReflectionMethod($class, '__construct'))->invokeArgs($object, $cArgs);
             }
 
             foreach ($row as $key => $value) {
@@ -334,17 +335,11 @@ trait QueryTrait
      */
     public function yieldPairs(string $sql, array $bind = []): Generator
     {
-        $result = $this->perform($sql, $bind);
+        foreach ($this->yieldPlain($sql, $bind) as $row) {
+            // null becomes an empty string, floats cannot be used as keys
+            $key = $row[0] ?? '';
 
-        try {
-            while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
-                // null becomes an empty string, floats cannot be used as keys
-                $key = $row[0] ?? '';
-
-                yield \is_float($key) ? (string) $key : $key => $row[1] ?? null;
-            }
-        } finally {
-            $result->finalize();
+            yield \is_float($key) ? (string) $key : $key => $row[1] ?? null;
         }
     }
 

@@ -12,6 +12,16 @@ use r4ndsen\SQLite\TestCase;
 final class FixedInsertTest extends TestCase
 {
     #[Test]
+    public function it_should_fixed_insert_numeric_column_names(): void
+    {
+        $table = $this->SQLite->getTable('numeric')->getFixedInsertTable();
+
+        $table->push([1 => 'foo']);
+        $table->push([1 => 'bar']);
+
+        self::assertSame([['1' => 'foo'], ['1' => 'bar']], $table->toArray());
+    }
+    #[Test]
     public function it_should_fixed_insert_table(): void
     {
         $table = $this->SQLite->getTable('dynamicdata')->getFixedInsertTable();

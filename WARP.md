@@ -165,7 +165,7 @@ Support for custom class hydration with reflection:
 - `.php-cs-fixer.php` - Code style configuration
 - `phpstan.neon.dist` - Static analysis rules
 - `phpunit.xml` - Test configuration with random execution order
-- `infection.json.dist` - Mutation testing configuration
+- `infection.json5.dist` - Mutation testing configuration
 
 **Docker Support:**
 - Multi-version PHP testing (8.2-8.5)

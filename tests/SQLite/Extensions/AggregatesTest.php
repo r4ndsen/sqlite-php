@@ -114,6 +114,12 @@ final class AggregatesTest extends TestCase
     }
 
     #[Test]
+    public function it_should_name_aggregates_after_their_class_in_camel_case(): void
+    {
+        self::assertSame('groupConcatUnique', (new GroupConcatUnique())->getIdentifier());
+    }
+
+    #[Test]
     public function it_should_reject_blank_aggregate_identifier(): void
     {
         $aggregates = new Aggregates($this->SQLite->getConnection());

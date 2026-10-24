@@ -106,7 +106,7 @@ final class PreparedStatement
         try {
             return $this->executeStatement();
         } finally {
-            if (++$this->counter % $this->commitModulo === 0) {
+            if (++$this->counter >= $this->commitModulo) {
                 $this->tx->commit()->begin();
                 $this->counter = 0;
             }
@@ -165,8 +165,8 @@ final class PreparedStatement
             $value = (int) $value;
         }
 
+        // null is bound as NULL whatever the type
         $type ??= match (true) {
-            $value === null   => SQLITE3_NULL,
             \is_int($value)   => SQLITE3_INTEGER,
             \is_float($value) => SQLITE3_FLOAT,
             default           => SQLITE3_TEXT,

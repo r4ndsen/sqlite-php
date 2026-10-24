@@ -17,13 +17,17 @@ final class PragmaTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test.sqlite';
+        // unique per test, infection runs the tests in parallel processes
+        $this->tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('pragma-', true) . '.sqlite';
         $this->SQLite = new SQLite($this->tempPath);
     }
     protected function tearDown(): void
     {
         $this->SQLite->getConnection()->close();
-        unlink($this->tempPath);
+
+        foreach (['', '-wal', '-shm', '-journal'] as $suffix) {
+            file_exists($this->tempPath . $suffix) && unlink($this->tempPath . $suffix);
+        }
     }
 
     #[Test]
@@ -94,6 +98,18 @@ final class PragmaTest extends TestCase
 
         $p->temp_store = 2;
         self::assertSame(Pragma\TempStore::MEMORY, $p->getTempStore());
+    }
+
+    #[Test]
+    public function it_should_get_encoding_by_its_name(): void
+    {
+        self::assertSame(Pragma\Encoding::UTF16LE, Pragma\Encoding::fromString('UTF16LE'));
+    }
+
+    #[Test]
+    public function it_should_get_temp_store_by_numeric_string(): void
+    {
+        self::assertSame(Pragma\TempStore::MEMORY, Pragma\TempStore::fromString('2'));
     }
 
     #[Test]
@@ -206,12 +222,58 @@ final class PragmaTest extends TestCase
     }
 
     #[Test]
+    public function it_should_reject_invalid_numeric_synchronous_value(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid value for pragma.synchronous: 7');
+
+        Pragma\Synchronous::fromString(7);
+    }
+
+    #[Test]
     public function it_should_reject_unknown_synchronous_values(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid value for pragma.synchronous: nope');
 
         Pragma\Synchronous::fromString('nope');
+    }
+
+    #[Test]
+    public function it_should_set_a_valid_page_size(): void
+    {
+        self::assertSame(1024, $this->SQLite->pragma->setPageSize(1024)->getPageSize());
+    }
+
+    #[Test]
+    public function it_should_set_enum_pragmas_by_uppercase_name(): void
+    {
+        $p = $this->SQLite->pragma;
+        $p->ENCODING = Pragma\Encoding::UTF16LE;
+        $p->JOURNAL_MODE = Pragma\JournalMode::MEMORY;
+        $p->LOCKING_MODE = Pragma\LockingMode::EXCLUSIVE;
+        $p->SYNCHRONOUS = Pragma\Synchronous::OFF;
+        $p->TEMP_STORE = Pragma\TempStore::MEMORY;
+
+        self::assertSame(Pragma\Encoding::UTF16LE, $p->getEncoding());
+        self::assertSame(Pragma\JournalMode::MEMORY, $p->getJournalMode());
+        self::assertSame(Pragma\LockingMode::EXCLUSIVE, $p->getLockingMode());
+        self::assertSame(Pragma\Synchronous::OFF, $p->getSynchronous());
+        self::assertSame(Pragma\TempStore::MEMORY, $p->getTempStore());
+    }
+
+    #[Test]
+    public function it_should_set_enum_pragmas_directly(): void
+    {
+        $p = $this->SQLite->pragma
+            ->setEncoding(Pragma\Encoding::UTF16LE)
+            ->setLockingMode(Pragma\LockingMode::EXCLUSIVE)
+            ->setTempStore(Pragma\TempStore::MEMORY)
+        ;
+
+        self::assertSame(Pragma\Encoding::UTF16LE, $p->getEncoding());
+        self::assertSame(Pragma\LockingMode::EXCLUSIVE, $p->getLockingMode());
+        self::assertSame(Pragma\TempStore::MEMORY, $p->getTempStore());
     }
 
     #[Test]
@@ -306,5 +368,19 @@ final class PragmaTest extends TestCase
         $this->expectException(TypeError::class);
 
         $this->SQLite->pragma->__set('temp_store', []);
+    }
+
+    #[Test]
+    public function it_should_trim_spaces_and_quotes_from_pragma_names(): void
+    {
+        self::assertSame(0, $this->SQLite->pragma->{' "user_version" '});
+    }
+
+    #[Test]
+    public function it_should_trim_spaces_and_quotes_when_setting_pragmas(): void
+    {
+        $this->SQLite->pragma->{' "cache_size" '} = 1234;
+
+        self::assertSame(1234, $this->SQLite->pragma->getCacheSize());
     }
 }
