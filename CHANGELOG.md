@@ -1,4 +1,5 @@
-[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.3...HEAD
+[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.4...HEAD
+[1.0.4]: https://github.com/r4ndsen/sqlite-php/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/r4ndsen/sqlite-php/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/r4ndsen/sqlite-php/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/r4ndsen/sqlite-php/compare/1.0.0...1.0.1
@@ -9,6 +10,14 @@
 All notable changes to this project will be listed in this file.
 
 ## [Unreleased]
+
+## [1.0.4] - 2026-10-24
+
+### Changed
+- The test suite merges tests that only differed in their input into data
+  providers and drops duplicates and tests that only exercised `SQLite3`
+  itself, going from 322 to 275 test methods. Tests that passed silently when
+  no exception was thrown now fail. Coverage and mutation score stay at 100%.
 
 ## [1.0.3] - 2026-10-24
 
