@@ -1,6 +1,6 @@
 <?php
 
-namespace r4ndsen\Phpcsfixer;
+namespace r4ndsen\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\Variable;

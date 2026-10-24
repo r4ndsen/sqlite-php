@@ -12,10 +12,13 @@ parameters:
 
 	ignoreErrors:
 		- identifier: missingType.iterableValue
-		- identifier: missingType.generics
 		-
 			path: tests
 			identifier: property.notFound
+		-
+			# tests assert results PHPStan can already infer
+			path: tests
+			identifier: staticMethod.alreadyNarrowedType
 		-
 			path: tests/SQLite/Traits/QueryTraitTest.php
 			identifier: property.unused

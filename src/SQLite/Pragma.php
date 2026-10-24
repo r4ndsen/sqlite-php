@@ -114,7 +114,6 @@ final class Pragma implements Constant
     /** @return ColumnSchema[] */
     public function getTableColumnSchemas(Table $table): array
     {
-        /** @phpstan-ignore return.type */
         return $this->fetchInstances(
             sql: sprintf('pragma table_info(%s)', $table),
             class: ColumnSchema::class
