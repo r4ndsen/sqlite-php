@@ -1,4 +1,5 @@
-[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.2...HEAD
+[Unreleased]: https://github.com/r4ndsen/sqlite-php/compare/1.0.3...HEAD
+[1.0.3]: https://github.com/r4ndsen/sqlite-php/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/r4ndsen/sqlite-php/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/r4ndsen/sqlite-php/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/r4ndsen/sqlite-php/commits/1.0.0
@@ -8,6 +9,14 @@
 All notable changes to this project will be listed in this file.
 
 ## [Unreleased]
+
+## [1.0.3] - 2026-10-24
+
+### Changed
+- The development tools require their current releases: PHP-CS-Fixer 3.95,
+  PHPBench 1.7, PHPStan 2.3 and Rector 2.7. Infection 0.35 is used on PHP 8.3
+  and later, PHP 8.2 keeps Infection 0.31. All mutants of Infection 0.35 are
+  killed.
 
 ## [1.0.2] - 2026-10-24
 
