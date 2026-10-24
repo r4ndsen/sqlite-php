@@ -10,7 +10,9 @@ use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\BindValueException;
 use r4ndsen\SQLite\Exception\MissingParameterException;
 use r4ndsen\SQLite\Exception\QueryException;
+use r4ndsen\SQLite\Exception\SyntaxErrorException;
 use stdClass;
+use Stringable;
 
 final class PreparedStatementTest extends TestCase
 {
@@ -54,6 +56,19 @@ final class PreparedStatementTest extends TestCase
         self::assertCount(2, $this->SQLite->test);
 
         $stm->commit();
+    }
+
+    #[Test]
+    public function it_should_bind_stringable_objects_as_text(): void
+    {
+        $value = new class implements Stringable {
+            public function __toString(): string
+            {
+                return "str\0ing";
+            }
+        };
+
+        self::assertSame('string', $this->SQLite->fetchValue('select :value', ['value' => $value]));
     }
 
     #[Test]
@@ -371,6 +386,14 @@ final class PreparedStatementTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->SQLite->test->push([new stdClass()]);
+    }
+
+    #[Test]
+    public function it_should_throw_when_executing_an_invalid_statement(): void
+    {
+        $this->expectException(SyntaxErrorException::class);
+
+        $this->SQLite->prepare('select from')->execute();
     }
 
     #[Test]

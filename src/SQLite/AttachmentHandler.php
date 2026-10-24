@@ -7,6 +7,7 @@ namespace r4ndsen\SQLite;
 use Exception;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\AttachedDatabaseException;
+use r4ndsen\SQLite\Exception\DatabaseException;
 use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\Traits\ExecTrait;
 use r4ndsen\SQLite\Traits\PragmaTrait;
@@ -83,6 +84,7 @@ class AttachmentHandler
      * returns a separate sqlite object for an attached database.
      *
      * @throws AttachedDatabaseException
+     * @throws DatabaseException
      */
     public function get(string $identifier): SQLite
     {
@@ -94,11 +96,7 @@ class AttachmentHandler
             throw new AttachedDatabaseException(sprintf('The in-memory database %s can only be used through the connection it is attached to', $identifier));
         }
 
-        try {
-            return $this->connections[$key] ??= new SQLite($path);
-        } catch (Exception $e) {
-            throw AttachedDatabaseException::from($e);
-        }
+        return $this->connections[$key] ??= new SQLite($path);
     }
 
     // Returns whether a database with given identifier attached.

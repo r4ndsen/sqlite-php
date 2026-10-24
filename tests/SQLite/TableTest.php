@@ -518,6 +518,15 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function it_should_push_empty_rows_with_default_values(): void
+    {
+        $this->SQLite->exec("create table t (a default 'x', b)");
+        $this->SQLite->t->push([])->commit();
+
+        self::assertSame([['a' => 'x', 'b' => null]], $this->SQLite->t->toArray());
+    }
+
+    #[Test]
     public function it_should_push_rows_by_column_name(): void
     {
         $this->SQLite->exec('create table t (a, b)');

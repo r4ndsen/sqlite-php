@@ -25,14 +25,7 @@ final class Connection extends SQLite3
         private readonly string $encryptionKey = '',
     ) {
         $this->enableExceptions(true);
-
-        try {
-            parent::__construct($filename, $flags, $encryptionKey);
-        } catch (Exception $e) {
-            throw DatabaseException::from($e);
-        }
-
-        $this->enableExtendedResultCodes(true);
+        $this->connect(fn () => parent::__construct($filename, $flags, $encryptionKey));
         $this->queryExceptionHandler = new QueryExceptionHandler($this);
     }
 
@@ -103,14 +96,7 @@ final class Connection extends SQLite3
     {
         $this->getTransaction()->commit();
         $this->close();
-
-        try {
-            $this->open($this->filename, $this->flags, $this->encryptionKey);
-        } catch (Exception $e) {
-            throw DatabaseException::from($e);
-        }
-
-        $this->enableExtendedResultCodes(true);
+        $this->connect(fn () => $this->open($this->filename, $this->flags, $this->encryptionKey));
     }
 
     // Finalize any open transaction before executing.
@@ -119,5 +105,21 @@ final class Connection extends SQLite3
         $this->getTransaction()->commit();
 
         return $this->exec('vacuum');
+    }
+
+    /**
+     * Opens the database through the given callback.
+     *
+     * @throws DatabaseException
+     */
+    private function connect(callable $open): void
+    {
+        try {
+            $open();
+        } catch (Exception $e) {
+            throw DatabaseException::from($e);
+        }
+
+        $this->enableExtendedResultCodes(true);
     }
 }

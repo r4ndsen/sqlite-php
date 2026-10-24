@@ -338,13 +338,10 @@ trait QueryTrait
 
         try {
             while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
+                // null becomes an empty string, floats cannot be used as keys
                 $key = $row[0] ?? '';
 
-                yield match (true) {
-                    \is_int($key), \is_string($key) => $key,
-                    \is_float($key)                 => (string) $key,
-                    default                         => '',
-                } => $row[1] ?? null;
+                yield \is_float($key) ? (string) $key : $key => $row[1] ?? null;
             }
         } finally {
             $result->finalize();
