@@ -29,13 +29,13 @@ final readonly class QueryExceptionHandler
         if (preg_match('/^(?:Unable to (?:prepare|execute) statement: )?UNIQUE constraint failed/', $e->getMessage())) {
             $this->throw(UniqueConstraintException::from($e));
         }
-        if (preg_match('/^Unable to prepare statement:(?: 1,)? no such table: (?<table>.+)/', $e->getMessage(), $m)) {
+        if (preg_match('/^Unable to prepare statement: no such table: (?<table>.+)/', $e->getMessage(), $m)) {
             $this->throw(new TableDoesNotExistException($m['table'], $e));
         }
         if (preg_match('/^no such table: (?<table>.+)/', $e->getMessage(), $m)) {
             $this->throw(new TableDoesNotExistException($m['table'], $e));
         }
-        if (preg_match('/^Unable to prepare statement:(?: 1,)? no such column: (?<column>.+)/', $e->getMessage(), $m)) {
+        if (preg_match('/^Unable to prepare statement: no such column: (?<column>.+)/', $e->getMessage(), $m)) {
             $this->throw(new ColumnDoesNotExistException($m['column'], $e));
         }
         if (preg_match('/^no such column: (?<column>.+)/', $e->getMessage(), $m)) {

@@ -10,7 +10,7 @@ Runs the PHPUnit suite against the current PHP version.
 ```shell
 just tests
 ```
-Boots Docker containers for PHP 8.2 through 8.5 and executes the test suite in
+Boots Docker containers for PHP 8.3 through 8.5 and executes the test suite in
 each environment. Shut the containers down afterwards with `docker-compose down`.
 
 ## Mutation testing

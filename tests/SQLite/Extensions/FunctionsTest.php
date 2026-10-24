@@ -96,8 +96,8 @@ final class FunctionsTest extends TestCase
 
         $identifier = str_repeat(' ', 4);
 
-        $failingFunction = new class($identifier) implements Functions\FunctionInterface {
-            public function __construct(private readonly string $identifier)
+        $failingFunction = new readonly class($identifier) implements Functions\FunctionInterface {
+            public function __construct(private string $identifier)
             {
             }
 

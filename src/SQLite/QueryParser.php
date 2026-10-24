@@ -9,10 +9,10 @@ use r4ndsen\SQLite\Exception\MissingParameterException;
 final class QueryParser
 {
     // Placeholders are never replaced in query parts matching this regex.
-    private const SKIP_BINDING_PARAM_REGEX = '#^(?:[\'"`\[]|--|/\*)#';
+    private const string SKIP_BINDING_PARAM_REGEX = '#^(?:[\'"`\[]|--|/\*)#';
 
     // String literals, quoted identifiers and comments as SQLite reads them (quotes are escaped by doubling them).
-    private const STATEMENT_SPLIT_REGEX = <<<'REGEX'
+    private const string STATEMENT_SPLIT_REGEX = <<<'REGEX'
         #('(?:[^']|'')*'|"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[[^\]]*\]|--[^\n]*|/\*.*?(?:\*/|\z))#s
         REGEX;
 

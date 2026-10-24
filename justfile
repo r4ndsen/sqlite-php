@@ -55,9 +55,8 @@ _test-docker version:
     {{docker_compose}} up -d php-{{version}}
     {{docker_compose}} exec php-{{version}} php /app/vendor/bin/phpunit
 
-test82: (_test-docker "8.2")
 test83: (_test-docker "8.3")
 test84: (_test-docker "8.4")
 test85: (_test-docker "8.5")
 
-tests: test82 test83 test84 test85
+tests: test83 test84 test85

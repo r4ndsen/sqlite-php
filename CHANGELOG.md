@@ -11,6 +11,20 @@ All notable changes to this project will be listed in this file.
 
 ## [Unreleased]
 
+### Removed
+- PHP 8.2 is no longer supported, the library requires PHP 8.3 or later.
+  Composer keeps PHP 8.2 projects on 1.0.x.
+- The exception handler no longer recognises PHP 8.2's error messages, which
+  put the error code after `Unable to prepare statement:`.
+
+### Changed
+- The development tools require PHPUnit 12.5 and Infection 0.35. CI no longer
+  runs on PHP 8.2 and uses `actions/checkout` v7 and
+  `ramsey/composer-install` v4.
+- Rector applies the PHP 8.3 set: class constants are typed, test doubles are
+  readonly anonymous classes. Coverage and mutation score stay at 100%.
+- `WARP.md` is gone, `AGENTS.md` is the only guide for coding agents.
+
 ## [1.0.4] - 2026-10-24
 
 ### Changed

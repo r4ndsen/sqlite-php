@@ -554,7 +554,7 @@ final class TableTest extends TestCase
             }
         }
 
-        $prepareMessage = '/^Unable to prepare statement:( 1,)? at most 64 tables in a join$/';
+        $prepareMessage = '/^Unable to prepare statement: at most 64 tables in a join$/';
         $queries = [
             'exec'        => [fn () => $this->SQLite->exec($sql), '/^at most 64 tables in a join$/'],
             'fetchOne'    => [fn () => $this->SQLite->fetchOne($sql), $prepareMessage],
@@ -620,6 +620,21 @@ final class TableTest extends TestCase
 
         self::assertTrue($this->SQLite->t->renameColumn(Column::createDefaultColumn('a'), Column::createDefaultColumn('b')));
         self::assertSame(['b'], array_keys($this->SQLite->t->columns()));
+    }
+
+    #[Test]
+    public function it_should_reuse_the_prepared_statement_for_rows_without_keys(): void
+    {
+        $table = $this->SQLite->t;
+        $table->createFromArray(['a', 'b']);
+
+        $table->pushWithoutKeys([1, 2]);
+        $preparedStatements = $this->getPropertyValue($table, 'preparedStatements');
+
+        $table->pushWithoutKeys([3, 4]);
+
+        self::assertSame($preparedStatements, $this->getPropertyValue($table, 'preparedStatements'));
+        self::assertCount(2, $table);
     }
 
     #[Test]

@@ -6,10 +6,6 @@ x-php: &php
   command: tail -f /dev/null
 
 services:
-  php-8.2:
-    <<: *php
-    image: php:8.2-cli-alpine
-
   php-8.3:
     <<: *php
     image: php:8.3-cli-alpine

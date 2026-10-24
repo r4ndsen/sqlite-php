@@ -7,7 +7,7 @@ introspection, and pragma management.
 [![Coverage Status](https://coveralls.io/repos/github/r4ndsen/sqlite-php/badge.svg?branch=main)](https://coveralls.io/github/r4ndsen/sqlite-php?branch=main)
 
 ## Requirements
-- PHP 8.2 or newer
+- PHP 8.3 or newer
 - `ext-sqlite3` and `ext-mbstring`
 
 ## Installation
@@ -67,7 +67,7 @@ All `just` recipes run from the project root (install `just` from https://github
 
 ```bash
 just test        # PHPUnit against the current PHP version
-just tests       # PHPUnit against the Docker matrix (PHP 8.2–8.5)
+just tests       # PHPUnit against the Docker matrix (PHP 8.3–8.5)
 just coverage    # Generates HTML coverage and prints the report path
 just infection   # Mutation testing (requires Xdebug)
 just stan        # PHPStan static analysis

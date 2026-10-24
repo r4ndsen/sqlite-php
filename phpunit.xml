@@ -10,7 +10,7 @@
          stopOnSkipped="false"
          bootstrap="tests/bootstrap.php"
          cacheDirectory="build/phpunit.cache"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd">
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.5/phpunit.xsd">
     <source>
         <include>
             <directory suffix=".php">src</directory>
