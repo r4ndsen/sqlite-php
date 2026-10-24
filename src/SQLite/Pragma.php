@@ -184,8 +184,8 @@ final class Pragma implements Constant
      */
     public function setPageSize(int $size): self
     {
-        // 1024 .. 65536
-        $valid = [2 << 9, 2 << 10, 2 << 11, 2 << 12, 2 << 13, 2 << 14, 2 << 15];
+        // 512 .. 65536
+        $valid = [2 << 8, 2 << 9, 2 << 10, 2 << 11, 2 << 12, 2 << 13, 2 << 14, 2 << 15];
         if (!\in_array($size, $valid, true)) {
             throw new SQLiteException(Constant::PAGE_SIZE . ' must be in (' . implode(', ', $valid) . ')');
         }

@@ -8,11 +8,11 @@ trait ExtensionTrait
 {
     protected string $identifier;
 
-    /** @return callable-string|callable */
+    // By default the PHP function named like the identifier is used
     public function getCallback(): callable
     {
         /** @phpstan-ignore return.type */
-        return $this->identifier;
+        return $this->getIdentifier();
     }
 
     public function getIdentifier(): string

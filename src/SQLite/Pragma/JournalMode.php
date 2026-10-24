@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace r4ndsen\SQLite\Pragma;
 
 use InvalidArgumentException;
 
-/** @see https:// www.sqlite.org/pragma.html#pragma_journal_mode */
+/** @see https://www.sqlite.org/pragma.html#pragma_journal_mode */
 enum JournalMode
 {
     case DELETE;

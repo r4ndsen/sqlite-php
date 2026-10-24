@@ -8,7 +8,7 @@ namespace r4ndsen\SQLite;
 final readonly class ColumnSchema
 {
     public ?string $defaultValue;
-    public bool $isPrivateKey;
+    public bool $isPrimaryKey;
     public bool $notNull;
     public ColumnType $type;
 
@@ -29,6 +29,6 @@ final readonly class ColumnSchema
             $this->defaultValue = preg_replace("#^'|'$#", '', $defaultValue);
         }
 
-        $this->isPrivateKey = $primaryKey > 0;
+        $this->isPrimaryKey = $primaryKey > 0;
     }
 }

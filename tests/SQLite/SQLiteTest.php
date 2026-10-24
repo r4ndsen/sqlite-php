@@ -26,6 +26,17 @@ final class SQLiteTest extends TestCase
     }
 
     #[Test]
+    public function it_should_check_tables_with_isset(): void
+    {
+        $this->SQLite->exec('create table t (a)');
+
+        self::assertTrue(isset($this->SQLite->t));
+        self::assertTrue(isset($this->SQLite->pragma));
+        self::assertFalse(isset($this->SQLite->missing));
+        self::assertInstanceOf(Pragma::class, $this->SQLite->getPragma());
+    }
+
+    #[Test]
     public function it_should_keep_extensions_and_tables_after_refresh(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'sqlite');

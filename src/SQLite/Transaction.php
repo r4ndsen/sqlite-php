@@ -40,4 +40,15 @@ final class Transaction
 
         return $this;
     }
+
+    // Discards everything written since begin()
+    public function rollback(): self
+    {
+        if ($this->active === true) {
+            $this->exec('rollback');
+            $this->active = false;
+        }
+
+        return $this;
+    }
 }

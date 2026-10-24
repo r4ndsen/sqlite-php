@@ -194,7 +194,7 @@ final class PragmaTest extends TestCase
     public function it_should_pragma_page_size(): void
     {
         $this->expectException(SQLiteException::class);
-        $this->expectExceptionMessage('page_size must be in (1024, 2048, 4096, 8192, 16384, 32768, 65536)');
+        $this->expectExceptionMessage('page_size must be in (512, 1024, 2048, 4096, 8192, 16384, 32768, 65536)');
 
         $pragma = $this->SQLite->pragma;
 

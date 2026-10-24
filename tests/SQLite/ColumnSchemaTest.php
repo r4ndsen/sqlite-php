@@ -23,7 +23,7 @@ final class ColumnSchemaTest extends TestCase
 
         self::assertNull($schema->defaultValue);
         self::assertFalse($schema->notNull);
-        self::assertFalse($schema->isPrivateKey);
+        self::assertFalse($schema->isPrimaryKey);
         self::assertSame(ColumnType::TEXT, $schema->type);
     }
     #[Test]
@@ -42,7 +42,7 @@ final class ColumnSchemaTest extends TestCase
         self::assertSame('Example', $schema->name);
         self::assertTrue($schema->notNull);
         self::assertSame('foo', $schema->defaultValue);
-        self::assertTrue($schema->isPrivateKey);
+        self::assertTrue($schema->isPrimaryKey);
         self::assertSame(ColumnType::INTEGER, $schema->type);
     }
 }
