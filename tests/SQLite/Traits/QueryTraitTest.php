@@ -17,6 +17,7 @@ use r4ndsen\SQLite\TestCase;
 use ReflectionException;
 use stdClass;
 use Stringable;
+use Traversable;
 
 final class QueryTraitTest extends TestCase
 {
@@ -278,6 +279,15 @@ final class QueryTraitTest extends TestCase
         $this->expectExceptionMessage('Class Stringable cannot be instantiated');
 
         $this->SQLite->fetchObjects("select 'foo'", class: Stringable::class);
+    }
+
+    #[Test]
+    public function it_should_not_allow_yield_object_with_interface_without_methods(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Class Traversable cannot be instantiated');
+
+        $this->SQLite->fetchObjects("select 'foo'", class: Traversable::class);
     }
 
     #[Test]
