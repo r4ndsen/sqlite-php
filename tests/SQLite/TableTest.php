@@ -7,6 +7,7 @@ namespace r4ndsen\SQLite;
 use BadMethodCallException;
 use Exception;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\CreateTableFailedException;
@@ -128,7 +129,7 @@ final class TableTest extends TestCase
     public function it_should_add_column_no_exist(): void
     {
         $this->expectException(TableDoesNotExistException::class);
-        self::assertFalse($this->SQLite->table->addColumn(Column::createDefaultColumn('test')));
+        $this->SQLite->table->addColumn(Column::createDefaultColumn('test'));
     }
 
     #[Test]
@@ -394,21 +395,10 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function it_should_create_table_with_reserved_name(): void
+    #[DataProvider('provideReservedTableNames')]
+    public function it_should_create_table_with_reserved_name(string $name): void
     {
-        $table = $this->SQLite->getTable('sqlite_test');
-
-        self::assertFalse($table->exists());
-        self::assertCount(0, $table);
-
-        $this->expectException(CreateTableFailedException::class);
-        $table->createFromArray(['foo']);
-    }
-
-    #[Test]
-    public function it_should_create_table_with_reserved_sensitive_name(): void
-    {
-        $table = $this->SQLite->getTable('SQLite_test');
+        $table = $this->SQLite->getTable($name);
 
         self::assertFalse($table->exists());
         self::assertCount(0, $table);
@@ -554,42 +544,31 @@ final class TableTest extends TestCase
     #[Test]
     public function it_should_multi_join_tables(): void
     {
-        $tables = range(1, 100);
-
         $sql = 'select * from `1`';
 
-        foreach ($tables as $table) {
+        foreach (range(1, 65) as $table) {
             $this->SQLite->$table->getDynamicInsertTable()->push(['id' => 1, 'table id' => $table]);
 
-            if (1 === $table) {
-                continue;
+            if ($table > 1) {
+                $sql .= sprintf(' join `%1$s` on `%1$s`.id = `1`.id', $table) . PHP_EOL;
             }
-
-            $sql .= sprintf(' join `%1$s` on `%1$s`.id = `1`.id', $table) . PHP_EOL;
         }
 
-        try {
-            $this->SQLite->fetchOne($sql);
-        } catch (TooManyTablesJoinedException $e) {
-            self::assertMatchesRegularExpression('/Unable to prepare statement:( 1,)? at most 64 tables in a join/', $e->getMessage());
-        }
+        $prepareMessage = '/^Unable to prepare statement:( 1,)? at most 64 tables in a join$/';
+        $queries = [
+            'exec'        => [fn () => $this->SQLite->exec($sql), '/^at most 64 tables in a join$/'],
+            'fetchOne'    => [fn () => $this->SQLite->fetchOne($sql), $prepareMessage],
+            'query'       => [fn () => $this->SQLite->query($sql), $prepareMessage],
+            'querySingle' => [fn () => $this->SQLite->querySingle($sql), $prepareMessage],
+        ];
 
-        try {
-            $this->SQLite->exec($sql);
-        } catch (TooManyTablesJoinedException $e) {
-            self::assertSame('at most 64 tables in a join', $e->getMessage());
-        }
-
-        try {
-            $this->SQLite->query($sql);
-        } catch (TooManyTablesJoinedException $e) {
-            self::assertMatchesRegularExpression('/Unable to prepare statement:( 1,)? at most 64 tables in a join/', $e->getMessage());
-        }
-
-        try {
-            $this->SQLite->querySingle($sql);
-        } catch (TooManyTablesJoinedException $e) {
-            self::assertMatchesRegularExpression('/Unable to prepare statement:( 1,)? at most 64 tables in a join/', $e->getMessage());
+        foreach ($queries as $method => [$query, $message]) {
+            try {
+                $query();
+                self::fail($method . ' should not join more than 64 tables');
+            } catch (TooManyTablesJoinedException $e) {
+                self::assertMatchesRegularExpression($message, $e->getMessage());
+            }
         }
     }
 
@@ -701,7 +680,14 @@ final class TableTest extends TestCase
     public function it_should_truncate_table(): void
     {
         $this->expectException(TableDoesNotExistException::class);
-        self::assertFalse($this->SQLite->table->truncate());
+        $this->SQLite->table->truncate();
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function provideReservedTableNames(): iterable
+    {
+        yield 'lowercase' => ['sqlite_test'];
+        yield 'mixed case' => ['SQLite_test'];
     }
 
     private function getCustomColumnFactory(): ColumnFactory\ColumnFactoryInterface

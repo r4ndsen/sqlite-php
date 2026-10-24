@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite\Table;
 
 use PHPUnit\Framework\Attributes\Test;
+use r4ndsen\SQLite\Column;
 use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
+use r4ndsen\SQLite\Exception\FeatureNotSupportedException;
+use r4ndsen\SQLite\Index;
 use r4ndsen\SQLite\Table;
 use r4ndsen\SQLite\TestCase;
+use SQLite3;
 
 final class FixedInsertTest extends TestCase
 {
@@ -21,6 +25,24 @@ final class FixedInsertTest extends TestCase
 
         self::assertSame([['1' => 'foo'], ['1' => 'bar']], $table->toArray());
     }
+
+    #[Test]
+    public function it_should_fixed_insert_rename_with_index(): void
+    {
+        $table = $this->SQLite->getTable('table')->getFixedInsertTable();
+        $colFrom = Column::createDefaultColumn('foo');
+        $colTo = Column::createDefaultColumn('bar');
+        $table->push([$colFrom->getLower() => 1]);
+        $table->addIndex(new Index($colFrom));
+
+        $table->renameColumn($colFrom, $colTo);
+
+        self::assertSame(
+            [[$colTo->getLower() => '1']],
+            $table->toArray()
+        );
+    }
+
     #[Test]
     public function it_should_fixed_insert_table(): void
     {
@@ -63,5 +85,26 @@ final class FixedInsertTest extends TestCase
 
         $this->expectException(ColumnDoesNotExistException::class);
         $table->push(['bar' => '1']);
+    }
+
+    #[Test]
+    public function it_should_fixed_insert_with_changing_column_case(): void
+    {
+        $table = $this->SQLite->getTable('table')->getFixedInsertTable();
+        $col = Column::createDefaultColumn('a');
+        $table->push(['a' => 1, 'b' => 2]);
+
+        if (SQLite3::version()['versionNumber'] < 3_035_000) {
+            $this->expectException(FeatureNotSupportedException::class);
+        }
+
+        $table->deleteColumn($col);
+
+        $table->push(['b' => 3]);
+
+        self::assertSame([
+            ['b' => '2'],
+            ['b' => '3'],
+        ], $table->toArray());
     }
 }

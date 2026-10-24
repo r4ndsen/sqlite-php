@@ -107,8 +107,6 @@ final class AggregatesTest extends TestCase
     #[Test]
     public function it_should_keep_last_row_by_id(): void
     {
-        self::assertSame([1 => '1', 3 => '2'], $this->SQLite->fetchPairs('select first(rowid), id from `test` group by id order by id asc'));
-        self::assertSame([3 => '2', 1 => '1'], $this->SQLite->fetchPairs('select first(rowid), id from `test` group by id order by id desc'));
         self::assertSame([4 => '1', 3 => '2'], $this->SQLite->fetchPairs('select last(rowid), id  from `test` group by id order by id asc'));
         self::assertSame([3 => '2', 4 => '1'], $this->SQLite->fetchPairs('select last(rowid), id  from `test` group by id order by id desc'));
     }

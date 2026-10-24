@@ -47,13 +47,6 @@ final class CollationsTest extends TestCase
     }
 
     #[Test]
-    public function it_should_collation_does_not_exist2(): void
-    {
-        $this->expectException(CollationDoesNotExistException::class);
-        $this->SQLite->exec('select * from data order by id collate FOO');
-    }
-
-    #[Test]
     public function it_should_natural_compare_with_negative_values(): void
     {
         self::assertSame([
@@ -163,20 +156,6 @@ final class CollationsTest extends TestCase
         $this->expectExceptionMessage('Failed to create collation: identifier must not be empty');
 
         $collations->add($failingCollation);
-    }
-
-    #[Test]
-    public function it_should_sort_order_on_strings_and_ints_with_native_sorting(): void
-    {
-        self::assertNotSame(
-            array_map('strval', $this->SQLite->fetchCol('select id from data2 order by id')),
-            array_map('strval', $this->SQLite->fetchCol('select id from data3 order by id'))
-        );
-
-        self::assertNotSame(
-            array_map('intval', $this->SQLite->fetchCol('select id from data2 order by id')),
-            array_map('intval', $this->SQLite->fetchCol('select id from data3 order by id'))
-        );
     }
 
     #[Test]

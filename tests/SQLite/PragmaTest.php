@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\SQLiteException;
@@ -209,14 +210,14 @@ final class PragmaTest extends TestCase
     #[Test]
     public function it_should_pragma_page_size(): void
     {
-        $this->expectException(SQLiteException::class);
-        $this->expectExceptionMessage('page_size must be in (512, 1024, 2048, 4096, 8192, 16384, 32768, 65536)');
-
         $pragma = $this->SQLite->pragma;
 
         $pragma->setPageSize(8_192);
         self::assertSame(8_192, $pragma->getPageSize());
         self::assertSame(8_192, $pragma->page_size);
+
+        $this->expectException(SQLiteException::class);
+        $this->expectExceptionMessage('page_size must be in (512, 1024, 2048, 4096, 8192, 16384, 32768, 65536)');
 
         $pragma->setPageSize(10);
     }
@@ -237,12 +238,6 @@ final class PragmaTest extends TestCase
         $this->expectExceptionMessage('Invalid value for pragma.synchronous: nope');
 
         Pragma\Synchronous::fromString('nope');
-    }
-
-    #[Test]
-    public function it_should_set_a_valid_page_size(): void
-    {
-        self::assertSame(1024, $this->SQLite->pragma->setPageSize(1024)->getPageSize());
     }
 
     #[Test]
@@ -290,84 +285,22 @@ final class PragmaTest extends TestCase
     }
 
     #[Test]
-    public function it_should_throw_on_invalid_encoding_string(): void
+    #[DataProvider('provideInvalidPragmaValues')]
+    public function it_should_throw_on_invalid_pragma_value(string $pragma, int|string $value): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid value for pragma.encoding: foo');
-        $this->SQLite->pragma->encoding = 'foo';
+        $this->expectExceptionMessage("Invalid value for pragma.{$pragma}: {$value}");
+
+        $this->SQLite->pragma->{$pragma} = $value;
     }
 
     #[Test]
-    public function it_should_throw_on_invalid_journal_mode(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid value for pragma.journal_mode: foo');
-
-        $this->SQLite->pragma->journal_mode = 'foo';
-    }
-
-    #[Test]
-    public function it_should_throw_on_invalid_locking_mode_string(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid value for pragma.locking_mode: foo');
-        $this->SQLite->pragma->locking_mode = 'foo';
-    }
-
-    #[Test]
-    public function it_should_throw_on_invalid_synchronous_numeric_value(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->SQLite->pragma->synchronous = 5;
-    }
-
-    #[Test]
-    public function it_should_throw_on_invalid_synchronous_value(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid value for pragma.synchronous: foo');
-
-        $this->SQLite->pragma->synchronous = 'foo';
-    }
-
-    #[Test]
-    public function it_should_throw_on_invalid_temp_store_number(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid value for pragma.temp_store: 10');
-        $this->SQLite->pragma->temp_store = 10;
-    }
-
-    #[Test]
-    public function it_should_throw_on_invalid_temp_store_string(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid value for pragma.temp_store: foo');
-        $this->SQLite->pragma->temp_store = 'foo';
-    }
-
-    #[Test]
-    public function it_should_throw_type_error(): void
+    #[DataProvider('provideValuesOfWrongType')]
+    public function it_should_throw_type_error(mixed $value): void
     {
         $this->expectException(TypeError::class);
 
-        $this->SQLite->pragma->temp_store = 1.0;
-    }
-
-    #[Test]
-    public function it_should_throw_type_error2(): void
-    {
-        $this->expectException(TypeError::class);
-
-        $this->SQLite->pragma->__set('temp_store', new stdClass());
-    }
-
-    #[Test]
-    public function it_should_throw_type_error3(): void
-    {
-        $this->expectException(TypeError::class);
-
-        $this->SQLite->pragma->__set('temp_store', []);
+        $this->SQLite->pragma->temp_store = $value;
     }
 
     #[Test]
@@ -382,5 +315,25 @@ final class PragmaTest extends TestCase
         $this->SQLite->pragma->{' "cache_size" '} = 1234;
 
         self::assertSame(1234, $this->SQLite->pragma->getCacheSize());
+    }
+
+    /** @return iterable<string, array{string, int|string}> */
+    public static function provideInvalidPragmaValues(): iterable
+    {
+        yield 'encoding' => ['encoding', 'foo'];
+        yield 'journal mode' => ['journal_mode', 'foo'];
+        yield 'locking mode' => ['locking_mode', 'foo'];
+        yield 'synchronous' => ['synchronous', 'foo'];
+        yield 'synchronous number' => ['synchronous', 5];
+        yield 'temp store' => ['temp_store', 'foo'];
+        yield 'temp store number' => ['temp_store', 10];
+    }
+
+    /** @return iterable<string, array{mixed}> */
+    public static function provideValuesOfWrongType(): iterable
+    {
+        yield 'float' => [1.0];
+        yield 'object' => [new stdClass()];
+        yield 'array' => [[]];
     }
 }

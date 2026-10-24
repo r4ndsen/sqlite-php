@@ -4,6 +4,7 @@ declare(strict_types=0);
 
 namespace r4ndsen\SQLite;
 
+use Closure;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
@@ -63,15 +64,6 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
-    public function it_should_create_blob_column(): void
-    {
-        $c = Column::createBlobColumn('blob');
-
-        self::assertNull($c->getDefaultValue());
-        self::assertSame(ColumnType::BLOB, $c->getType());
-    }
-
-    #[Test]
     public function it_should_create_columns_from_factory_default_value(): void
     {
         $factory = new ColumnFactory('fallback');
@@ -97,57 +89,11 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
-    public function it_should_create_float_column(): void
-    {
-        $c = Column::createFloatColumn('float');
-
-        self::assertNull($c->getDefaultValue());
-        self::assertSame(ColumnType::REAL, $c->getType());
-    }
-
-    #[Test]
-    public function it_should_create_integer_column(): void
-    {
-        $c = Column::createIntegerColumn('int');
-
-        self::assertNull($c->getDefaultValue());
-        self::assertSame(ColumnType::INTEGER, $c->getType());
-    }
-
-    #[Test]
     public function it_should_create_not_null_column_from_schema(): void
     {
         $column = Column::createFromSchema(new ColumnSchema(0, 'a', 'text', 1, null, 0));
 
         self::assertSame('`a` TEXT default null NOT NULL', $column->getCreateStatement());
-    }
-
-    #[Test]
-    public function it_should_create_text_column_with_float_default_value(): void
-    {
-        $a = Column::createTextColumn('testA', (string) M_PI);
-        self::assertSame((string) M_PI, $a->getDefaultValue());
-
-        $table = $this->SQLite->test;
-        $table->addCreateColumn($a);
-        self::assertTrue($table->create());
-
-        $table->getDynamicInsertTable()->push(['rowid' => 10]);
-        self::assertSame((string) M_PI, $this->SQLite->fetchValue('select * from test'));
-    }
-
-    #[Test]
-    public function it_should_create_text_column_with_integer_default_value(): void
-    {
-        $a = Column::createTextColumn('testA', (string) PHP_INT_MAX);
-        self::assertSame((string) PHP_INT_MAX, $a->getDefaultValue());
-
-        $table = $this->SQLite->test;
-        $table->addCreateColumn($a);
-        self::assertTrue($table->create());
-
-        $table->getDynamicInsertTable()->push(['rowid' => 10]);
-        self::assertSame((string) PHP_INT_MAX, $this->SQLite->fetchValue('select * from test'));
     }
 
     #[Test]
@@ -173,6 +119,17 @@ final class ColumnTest extends TestCase
 
         $table->getDynamicInsertTable()->push(['rowid' => 7, 'testA' => 'value', 'testB' => 'value']);
         self::assertSame(['value' => 'value'], $this->SQLite->fetchPair('select testA, testB from test'));
+    }
+
+    /** @param Closure(string): Column $factory */
+    #[Test]
+    #[DataProvider('provideTypedColumnFactories')]
+    public function it_should_create_typed_column_without_default_value(Closure $factory, ColumnType $type): void
+    {
+        $c = $factory('column');
+
+        self::assertNull($c->getDefaultValue());
+        self::assertSame($type, $c->getType());
     }
 
     #[Test]
@@ -281,14 +238,18 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
-    public function it_should_keep_default_value_on_integer_column(): void
+    #[DataProvider('provideScalarDefaultValues')]
+    public function it_should_insert_scalar_default_value(string|int|float|bool $defaultValue, string $expectedValue): void
     {
-        $c = new Column('foo', defaultValue: 1.2);
+        $c = Column::createTextColumn('testA', $defaultValue);
+        self::assertSame($expectedValue, $c->getDefaultValue());
 
-        $this->SQLite->getTable('test')->addCreateColumn($c)->create();
-        $columns = $this->SQLite->getTable('test')->schema();
+        $table = $this->SQLite->test;
+        $table->addCreateColumn($c);
+        self::assertTrue($table->create());
 
-        self::assertSame('1.2', $columns['foo']->getDefaultValue());
+        $this->SQLite->exec('insert into test default values');
+        self::assertSame($expectedValue, $this->SQLite->fetchValue('select testA from test'));
     }
 
     #[Test]
@@ -322,36 +283,6 @@ final class ColumnTest extends TestCase
         self::assertSame('test', $c->getPlain());
     }
 
-    #[Test]
-    public function it_should_use_boolean_false_default_value(): void
-    {
-        $table = $this->SQLite->getTable('flag_false');
-        $table
-            ->addCreateColumn(Column::createTextColumn('flag', false))
-            ->createIfNotExists()
-        ;
-
-        self::assertSame('0', $table->schema()['flag']->getDefaultValue());
-
-        $this->SQLite->exec('insert into flag_false default values');
-        self::assertSame('0', $this->SQLite->fetchValue('select flag from flag_false'));
-    }
-
-    #[Test]
-    public function it_should_use_boolean_true_default_value(): void
-    {
-        $table = $this->SQLite->getTable('flag_true');
-        $table
-            ->addCreateColumn(Column::createTextColumn('flag', true))
-            ->createIfNotExists()
-        ;
-
-        self::assertSame('1', $table->schema()['flag']->getDefaultValue());
-
-        $this->SQLite->exec('insert into flag_true default values');
-        self::assertSame('1', $this->SQLite->fetchValue('select flag from flag_true'));
-    }
-
     public static function provideColumnDefaultValues(): iterable
     {
         yield 'integer' => [
@@ -364,6 +295,28 @@ final class ColumnTest extends TestCase
             'createValue'   => 1.2,
             'expectedValue' => '1.2',
         ];
+        yield 'text' => [
+            'columnType'    => ColumnType::TEXT,
+            'createValue'   => 1.2,
+            'expectedValue' => '1.2',
+        ];
+    }
+
+    /** @return iterable<string, array{string|int|float|bool, string}> */
+    public static function provideScalarDefaultValues(): iterable
+    {
+        yield 'float string' => [(string) M_PI, (string) M_PI];
+        yield 'integer string' => [(string) PHP_INT_MAX, (string) PHP_INT_MAX];
+        yield 'false' => [false, '0'];
+        yield 'true' => [true, '1'];
+    }
+
+    /** @return iterable<string, array{Closure(string): Column, ColumnType}> */
+    public static function provideTypedColumnFactories(): iterable
+    {
+        yield 'blob' => [Column::createBlobColumn(...), ColumnType::BLOB];
+        yield 'float' => [Column::createFloatColumn(...), ColumnType::REAL];
+        yield 'integer' => [Column::createIntegerColumn(...), ColumnType::INTEGER];
     }
 }
 

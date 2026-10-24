@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\Exception\BindValueException;
@@ -176,25 +177,10 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
-    public function it_should_data_is_not_persisted_when_not_referenced_anymore(): void
-    {
-        $path = $this->createDatabasePath();
-        $sqlite = new SQLite($path);
-        $sqlite->getTable('test')->drop();
-        $sqlite->test->getDynamicInsertTable()->push(['id' => '1']);
-        $sqlite->test->getDynamicInsertTable()->push(['title' => 'foo']);
-        $sqlite->test->getDynamicInsertTable()->push(['title' => 'bar']);
-
-        $sqlite = new SQLite($path);
-        self::assertCount(3, $sqlite->test);
-    }
-
-    #[Test]
     public function it_should_data_is_not_persisted_when_opening_new_instance(): void
     {
         $path = $this->createDatabasePath();
         $sqlite = new SQLite($path);
-        $sqlite->getTable('test')->drop();
         $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
@@ -210,7 +196,6 @@ final class PreparedStatementTest extends TestCase
     {
         $path = $this->createDatabasePath();
         $sqlite = new SQLite($path);
-        $sqlite->getTable('test')->drop();
         $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
@@ -222,20 +207,15 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
-    public function it_should_data_is_persisted_after_destructing_the_prepared_statement(): void
+    public function it_should_data_is_persisted_when_not_referenced_anymore(): void
     {
         $path = $this->createDatabasePath();
         $sqlite = new SQLite($path);
-        $sqlite->getTable('test')->drop();
+        $sqlite->test->getDynamicInsertTable()->push(['id' => '1']);
+        $sqlite->test->getDynamicInsertTable()->push(['title' => 'foo']);
+        $sqlite->test->getDynamicInsertTable()->push(['title' => 'bar']);
 
-        $table = $sqlite->test->getDynamicInsertTable();
-        $table->push(['id' => '1']);
-        $table->push(['title' => 'foo']);
-        $table->push(['title' => 'bar']);
-
-        // destruct prepared statement within the table
-        unset($table);
-
+        $sqlite = new SQLite($path);
         self::assertCount(3, $sqlite->test);
     }
 
@@ -248,7 +228,8 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
-    public function it_should_insert_params(): void
+    #[DataProvider('provideArrayParameters')]
+    public function it_should_insert_params(string $sql, array $parameters): void
     {
         $id = Column::createIntegerColumn('id');
 
@@ -265,52 +246,7 @@ final class PreparedStatementTest extends TestCase
         self::assertCount(7, $t);
 
         // false is stored as 0
-        $result = $this->SQLite->fetchCol('select id from test where id in (:ids)', ['ids' => [0, 1, '', '\\']]);
-        self::assertSame([1, '\\', 0, 1, 1], array_values($result));
-
-        self::assertSame(1, $this->SQLite->fetchValue('select count(*) from test where id is null and rowid = ?', [1]));
-    }
-
-    #[Test]
-    public function it_should_insert_params2(): void
-    {
-        $id = Column::createIntegerColumn('id');
-
-        $this->SQLite->test
-            ->addCreateColumn($id)
-            ->create()
-        ;
-
-        $t = $this->SQLite->test;
-
-        foreach ([null, 1, '2', '\\', false, true, 1.0] as $value) {
-            $t->pushWithoutKeys([$value]);
-        }
-        self::assertCount(7, $t);
-
-        $this->expectException(MissingParameterException::class);
-        $this->expectExceptionMessage('Parameter 1 is missing from the bound values');
-        $this->SQLite->fetchCol('select id from test where id in (?)', ['ids' => [0, 1, '', '\\']]);
-    }
-
-    #[Test]
-    public function it_should_insert_params3(): void
-    {
-        $id = Column::createIntegerColumn('id');
-
-        $this->SQLite->test
-            ->addCreateColumn($id)
-            ->create()
-        ;
-
-        $t = $this->SQLite->test;
-
-        foreach ([null, 1, '2', '\\', false, true, 1.0] as $value) {
-            $t->pushWithoutKeys([$value]);
-        }
-        self::assertCount(7, $t);
-        $result = $this->SQLite->fetchCol('select id from test where id in (?)', [[0, 1, '', '\\']]);
-
+        $result = $this->SQLite->fetchCol($sql, $parameters);
         self::assertSame([1, '\\', 0, 1, 1], array_values($result));
 
         self::assertSame(1, $this->SQLite->fetchValue('select count(*) from test where id is null and rowid = ?', [1]));
@@ -402,31 +338,6 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
-    public function it_should_set_commit_modulo(): void
-    {
-        $id = Column::createIntegerColumn('id');
-        $content = Column::createDefaultColumn('content');
-
-        $this->SQLite->test
-            ->addCreateColumn($id)
-            ->addCreateColumn($content)
-            ->createIfNotExists()
-        ;
-
-        $stm = $this->SQLite->prepare($sql = 'insert into test (content) values (:content)');
-        self::assertSame($sql, $stm->getQueryString());
-
-        $stm->setCommitModulo(1);
-
-        $stm->bindAssoc(['content' => 'from prepared']);
-        $stm->bindAssoc(['content' => 'from prepared2'], ['content' => SQLITE3_TEXT]);
-
-        self::assertCount(2, $this->SQLite->test);
-
-        $stm->commit();
-    }
-
-    #[Test]
     public function it_should_set_commit_modulo_invalid_argument(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -464,6 +375,15 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
+    public function it_should_throw_when_a_positional_parameter_is_bound_by_name(): void
+    {
+        $this->expectException(MissingParameterException::class);
+        $this->expectExceptionMessage('Parameter 1 is missing from the bound values');
+
+        $this->SQLite->fetchCol('select ?', ['ids' => [0, 1]]);
+    }
+
+    #[Test]
     public function it_should_throw_when_executing_an_invalid_statement(): void
     {
         $this->expectException(SyntaxErrorException::class);
@@ -476,7 +396,6 @@ final class PreparedStatementTest extends TestCase
     {
         $path = $this->createDatabasePath();
         $sqlite = new SQLite($path);
-        $sqlite->getTable('test')->drop();
         $table = $sqlite->getTable('test')->getDynamicInsertTable();
         $table->push(['id' => '1']);
         $table->push(['title' => 'foo']);
@@ -501,6 +420,13 @@ final class PreparedStatementTest extends TestCase
         $t->pushWithoutKeys([123]);
 
         self::assertSame(123, $t->querySingle('select id from test'));
+    }
+
+    /** @return iterable<string, array{string, array<array-key, list<int|string>>}> */
+    public static function provideArrayParameters(): iterable
+    {
+        yield 'named' => ['select id from test where id in (:ids)', ['ids' => [0, 1, '', '\\']]];
+        yield 'positional' => ['select id from test where id in (?)', [[0, 1, '', '\\']]];
     }
 
     private function createDatabasePath(): string

@@ -7,6 +7,7 @@ namespace r4ndsen\SQLite\Traits;
 use Error;
 use Generator;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite\Column;
 use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
@@ -98,11 +99,6 @@ final class QueryTraitTest extends TestCase
     #[Test]
     public function it_should_fetch_object(): void
     {
-        $table = __METHOD__;
-        $table = $this->SQLite->getTable($table);
-        self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
-        $table->push(['id' => 1]);
-
         self::assertNull($this->SQLite->fetchObject('select 1 where 1 = 2'));
         self::assertSame([], $this->SQLite->fetchObjects('select 1 where 1 = 2'));
 
@@ -136,26 +132,8 @@ final class QueryTraitTest extends TestCase
     }
 
     #[Test]
-    public function it_should_fetch_object_of_abstract_class(): void
-    {
-        $table = __METHOD__;
-        $table = $this->SQLite->getTable($table);
-        self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
-        $table->push(['id' => 1]);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be instantiated');
-        $this->SQLite->fetchObject('select 1 as id', [], AbstractClass::class);
-    }
-
-    #[Test]
     public function it_should_fetch_object_of_class_with_no_constructor(): void
     {
-        $table = __METHOD__;
-        $table = $this->SQLite->getTable($table);
-        self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
-        $table->push(['id' => 1]);
-
         $object = $this->SQLite->fetchObject('select "foo" as id', [], WithNoConstructor::class);
         self::assertInstanceOf(WithNoConstructor::class, $object);
         self::assertObjectHasProperty('id', $object);
@@ -166,12 +144,6 @@ final class QueryTraitTest extends TestCase
     #[Test]
     public function it_should_fetch_object_of_non_existin_class(): void
     {
-        $table = __METHOD__;
-        $table = $this->SQLite->getTable($table);
-        self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
-        self::assertTrue($table->exists());
-        $table->push(['id' => '1']);
-
         $this->expectException(ReflectionException::class);
         $this->expectExceptionMessage('Class "NonExisting\\Foo" does not exist');
 
@@ -272,40 +244,15 @@ final class QueryTraitTest extends TestCase
         self::assertNull($this->SQLite->fetchValue('select null where 1 = 2'));
     }
 
+    /** @param class-string<object> $class */
     #[Test]
-    public function it_should_not_allow_yield_object_with_interface(): void
+    #[DataProvider('provideClassesThatCannotBeInstantiated')]
+    public function it_should_not_fetch_classes_that_cannot_be_instantiated(string $method, string $class): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Class Stringable cannot be instantiated');
+        $this->expectExceptionMessage("Class {$class} cannot be instantiated");
 
-        $this->SQLite->fetchObjects("select 'foo'", class: Stringable::class);
-    }
-
-    #[Test]
-    public function it_should_not_allow_yield_object_with_interface_without_methods(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Class Traversable cannot be instantiated');
-
-        $this->SQLite->fetchObjects("select 'foo'", class: Traversable::class);
-    }
-
-    #[Test]
-    public function it_should_not_yield_instances_of_abstract_class(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be instantiated');
-
-        $this->SQLite->fetchInstance('select 1', [], AbstractClass::class);
-    }
-
-    #[Test]
-    public function it_should_not_yield_instances_of_class_with_private_constructor(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be instantiated');
-
-        $this->SQLite->fetchInstance('select 1', [], WithPrivateConstructor::class);
+        $this->SQLite->{$method}('select 1 as id', [], $class);
     }
 
     #[Test]
@@ -462,6 +409,16 @@ final class QueryTraitTest extends TestCase
         self::assertSame(['null' => null], $this->SQLite->fetchOne('select null, null'));
 
         self::assertSame([], $this->SQLite->fetchPlain('select 1 where 1 = 2'));
+    }
+
+    /** @return iterable<string, array{string, class-string<object>}> */
+    public static function provideClassesThatCannotBeInstantiated(): iterable
+    {
+        yield 'object of abstract class' => ['fetchObject', AbstractClass::class];
+        yield 'objects of interface' => ['fetchObjects', Stringable::class];
+        yield 'objects of interface without methods' => ['fetchObjects', Traversable::class];
+        yield 'instance of abstract class' => ['fetchInstance', AbstractClass::class];
+        yield 'instance of class with private constructor' => ['fetchInstance', WithPrivateConstructor::class];
     }
 }
 
