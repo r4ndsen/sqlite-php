@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite\Traits;
 
 use Generator;
+use InvalidArgumentException;
+use r4ndsen\SQLite\Exception\MissingParameterException;
 use r4ndsen\SQLite\Exception\SQLiteException;
 use r4ndsen\SQLite\PreparedStatement;
 use r4ndsen\SQLite\QueryParser;
@@ -13,7 +15,6 @@ use ReflectionException;
 use SQLite3Result;
 use stdClass;
 
-/** @template T of object */
 trait QueryTrait
 {
     use ExecTrait;
@@ -46,10 +47,13 @@ trait QueryTrait
     /**
      * the first row of the result set as an object of given class.
      *
+     * @template T of object
+     *
      * @param class-string<T> $class
      *
      * @return T|null
      *
+     * @throws InvalidArgumentException if the class cannot be instantiated
      * @throws ReflectionException
      */
     public function fetchInstance(string $sql, array $bind = [], string $class = stdClass::class): ?object
@@ -62,10 +66,13 @@ trait QueryTrait
     }
 
     /**
+     * @template T of object
+     *
      * @param class-string<T> $class
      *
-     * @return array<T|null>
+     * @return array<T>
      *
+     * @throws InvalidArgumentException if the class cannot be instantiated
      * @throws ReflectionException
      * @throws SQLiteException
      */
@@ -77,10 +84,13 @@ trait QueryTrait
     /**
      * the first row of the result set as an object of given class.
      *
+     * @template T of object
+     *
      * @param class-string<T> $class
      *
      * @return T|null
      *
+     * @throws InvalidArgumentException if the class cannot be instantiated
      * @throws ReflectionException
      * @throws SQLiteException
      */
@@ -96,10 +106,13 @@ trait QueryTrait
     /**
      * an array of objects created from the selected fields.
      *
+     * @template T of object
+     *
      * @param class-string<T> $class the class of the objects you want to receive
      *
-     * @return array<T|null>
+     * @return array<T>
      *
+     * @throws InvalidArgumentException if the class cannot be instantiated
      * @throws SQLiteException
      * @throws ReflectionException
      */
@@ -229,13 +242,17 @@ trait QueryTrait
 
     /**
      * produces instances of given class calling the classes native constructor.
+     * Classes without a constructor get the selected fields assigned as properties, like yieldObjects() does.
+     *
+     * @template T of object
      *
      * @param string          $sql   the sql query
      * @param array           $bind  the params you want to bind to your query
      * @param class-string<T> $class the class of the objects you want to receive
      *
-     * @return Generator<T|null>
+     * @return Generator<T>
      *
+     * @throws InvalidArgumentException if the class cannot be instantiated
      * @throws ReflectionException
      * @throws SQLiteException
      */
@@ -244,31 +261,32 @@ trait QueryTrait
         $reflectionClass = new ReflectionClass($class);
 
         if (!$reflectionClass->isInstantiable()) {
-            return yield;
+            throw new InvalidArgumentException(sprintf('Class %s cannot be instantiated', $class));
         }
-
-        $result = $this->yieldAll($sql, $bind);
 
         // check whether a constructor is defined
         if ($reflectionClass->getConstructor() === null) {
-            foreach ($result as $ignored) {
-                yield new $class();
-            }
-        } else {
-            foreach ($result as $row) {
-                yield $reflectionClass->newInstanceArgs(array_values($row));
-            }
+            yield from $this->yieldObjects($sql, $bind, $class);
+
+            return;
+        }
+
+        foreach ($this->yieldAll($sql, $bind) as $row) {
+            yield $reflectionClass->newInstanceArgs(array_values($row));
         }
     }
 
     /**
+     * @template T of object
+     *
      * @param string          $sql   the sql query
      * @param array           $bind  the params you want to bind to your query
      * @param class-string<T> $class the class of the objects you want to receive
      * @param array           $cArgs constructor arguments to add when instantiating
      *
-     * @return Generator<T|null>
+     * @return Generator<T>
      *
+     * @throws InvalidArgumentException if the class cannot be instantiated
      * @throws ReflectionException
      * @throws SQLiteException
      */
@@ -276,8 +294,8 @@ trait QueryTrait
     {
         $reflectionClass = new ReflectionClass($class);
 
-        if ($reflectionClass->isAbstract()) {
-            return yield; // cannot be instantiated
+        if ($reflectionClass->isAbstract() || $reflectionClass->isInterface() || $reflectionClass->isEnum()) {
+            throw new InvalidArgumentException(sprintf('Class %s cannot be instantiated', $class));
         }
 
         foreach ($this->yieldAll($sql, $bind) as $row) {
@@ -321,11 +339,12 @@ trait QueryTrait
         try {
             while (($row = $result->fetchArray(SQLITE3_NUM)) !== false) {
                 $key = $row[0] ?? '';
-                if (!\is_int($key) && !\is_string($key)) {
-                    $key = (string) $key;
-                }
 
-                yield $key => $row[1] ?? null;
+                yield match (true) {
+                    \is_int($key), \is_string($key) => $key,
+                    \is_float($key)                 => (string) $key,
+                    default                         => '',
+                } => $row[1] ?? null;
             }
         } finally {
             $result->finalize();
@@ -355,6 +374,7 @@ trait QueryTrait
     {
         try {
             while (($row = $result->fetchArray($mode)) !== false) {
+                /** @phpstan-ignore generator.valueType (SQLite3Result only returns scalars and null) */
                 yield $row;
             }
         } finally {
@@ -372,10 +392,14 @@ trait QueryTrait
     private function perform(string $sql, array $bind = []): SQLite3Result
     {
         $parser = new QueryParser($sql, $bind);
+        $statement = $this->prepare($parser->getStatement());
+        $values = $parser->getValues();
 
-        return $this
-            ->prepare($parser->getStatement())
-            ->bindAssoc($parser->getValues())
-        ;
+        // placeholders the parser did not recognize (e.g. "@name") would silently be bound as NULL
+        if ($statement->paramCount() !== \count($values)) {
+            throw new MissingParameterException(sprintf('The statement expects %d parameter(s) but %d were bound', $statement->paramCount(), \count($values)));
+        }
+
+        return $statement->bindAssoc($values);
     }
 }

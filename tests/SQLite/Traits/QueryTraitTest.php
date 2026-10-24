@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace r4ndsen\SQLite\Traits;
 
 use Generator;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite\Column;
 use r4ndsen\SQLite\Exception\ColumnDoesNotExistException;
@@ -121,8 +122,9 @@ final class QueryTraitTest extends TestCase
         self::assertTrue($table->addCreateColumn(Column::createIntegerColumn('id'))->create());
         $table->push(['id' => 1]);
 
-        $object = $this->SQLite->fetchObject('select 1 as id', [], AbstractClass::class);
-        self::assertNull($object);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('cannot be instantiated');
+        $this->SQLite->fetchObject('select 1 as id', [], AbstractClass::class);
     }
 
     #[Test]
@@ -252,9 +254,10 @@ final class QueryTraitTest extends TestCase
     #[Test]
     public function it_should_not_allow_yield_object_with_interface(): void
     {
-        $instances = $this->SQLite->fetchObjects("select 'foo'", class: Stringable::class);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Class Stringable cannot be instantiated');
 
-        self::assertSame([null], $instances);
+        $this->SQLite->fetchObjects("select 'foo'", class: Stringable::class);
     }
 
     #[Test]
@@ -346,30 +349,41 @@ final class QueryTraitTest extends TestCase
         $table->push(['id' => 1]);
         $table->push(['id' => 2]);
 
+        // classes without a constructor get the fields assigned as properties
         $instance = $this->SQLite->fetchInstance("select * from `$tablename`");
         self::assertInstanceOf(stdClass::class, $instance);
+        self::assertSame(1, $instance->id);
 
         $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], WithDebugConstructor::class);
         self::assertInstanceOf(WithDebugConstructor::class, $instance);
-
-        // cannot instantiate an abstract class
-        $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], AbstractClass::class);
-        self::assertNull($instance);
-
-        // cannot instantiate a class with private constructor
-        $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], WithPrivateConstructor::class);
-        self::assertNull($instance);
 
         // no rows were returned
         $instance = $this->SQLite->fetchInstance("select date('now') from `$tablename` where rowid=-1");
         self::assertNull($instance);
 
-        // instance will be created but without giving constructor arguments
         $instance = $this->SQLite->fetchInstance("select rowid, id+10 from `$tablename`", [], WithNoConstructor::class);
         self::assertInstanceOf(WithNoConstructor::class, $instance);
 
         $instances = $this->SQLite->fetchInstances("select rowid, id+10 from `$tablename`", [], WithDebugConstructor::class);
         self::assertCount(2, $instances);
+    }
+
+    #[Test]
+    public function it_should_not_yield_instances_of_abstract_class(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('cannot be instantiated');
+
+        $this->SQLite->fetchInstance('select 1', [], AbstractClass::class);
+    }
+
+    #[Test]
+    public function it_should_not_yield_instances_of_class_with_private_constructor(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('cannot be instantiated');
+
+        $this->SQLite->fetchInstance('select 1', [], WithPrivateConstructor::class);
     }
 
     #[Test]
