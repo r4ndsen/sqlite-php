@@ -19,6 +19,20 @@ use SQLite3;
 final class DynamicInsertTest extends TestCase
 {
     #[Test]
+    public function it_should_add_columns_with_untrimmed_names(): void
+    {
+        $table = $this->SQLite->table->getDynamicInsertTable();
+        $table->push(['a' => 1]);
+        $table->push([' b ' => 2]);
+        $table->push(['B' => 3])->commit();
+
+        self::assertSame([
+            ['a' => '1', 'b' => ''],
+            ['a' => '', 'b' => '2'],
+            ['a' => '', 'b' => '3'],
+        ], $table->toArray());
+    }
+    #[Test]
     public function it_should_create_multibyte_column_name(): void
     {
         $table = $this->SQLite->dynamicdata->getDynamicInsertTable();
@@ -451,6 +465,29 @@ final class DynamicInsertTest extends TestCase
     }
 
     #[Test]
+    public function it_should_insert_rows_with_many_different_column_sets(): void
+    {
+        $table = $this->SQLite->sparse->getDynamicInsertTable();
+
+        // 255 different column combinations exceed the number of statements kept prepared
+        for ($mask = 1; $mask < 256; ++$mask) {
+            $row = [];
+            for ($bit = 0; $bit < 8; ++$bit) {
+                if ($mask & (1 << $bit)) {
+                    $row['c' . $bit] = $bit;
+                }
+            }
+
+            $table->push($row);
+        }
+
+        $table->commit();
+
+        self::assertCount(255, $table);
+        self::assertSame(128, $table->fetchValue('select count(*) from sparse where c7 = 7'));
+    }
+
+    #[Test]
     public function it_should_insert_with_numeric_column_names(): void
     {
         $table = $this->SQLite->table->getDynamicInsertTable();
@@ -470,6 +507,23 @@ final class DynamicInsertTest extends TestCase
         }
 
         self::assertCount(1_200, $table);
+    }
+
+    #[Test]
+    public function it_should_leave_default_values_to_sqlite(): void
+    {
+        $this->SQLite->exec('create table defaults (a text, ts text default CURRENT_TIMESTAMP, n text DEFAULT NULL, q text default \'it\'\'s\')');
+
+        $table = $this->SQLite->defaults->getDynamicInsertTable();
+        $table->push(['a' => 'x'])->commit();
+
+        $row = $table->fetchOne('select * from defaults');
+
+        self::assertNotNull($row);
+        self::assertSame('x', $row['a']);
+        self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', (string) $row['ts']);
+        self::assertNull($row['n']);
+        self::assertSame("it's", $row['q']);
     }
 
     #[Test]
@@ -495,60 +549,5 @@ final class DynamicInsertTest extends TestCase
         $table->push(['foo' => 1, 'bar' => 2]);
 
         self::assertCount(1, $table);
-    }
-
-    #[Test]
-    public function it_should_leave_default_values_to_sqlite(): void
-    {
-        $this->SQLite->exec('create table defaults (a text, ts text default CURRENT_TIMESTAMP, n text DEFAULT NULL, q text default \'it\'\'s\')');
-
-        $table = $this->SQLite->defaults->getDynamicInsertTable();
-        $table->push(['a' => 'x'])->commit();
-
-        $row = $table->fetchOne('select * from defaults');
-
-        self::assertNotNull($row);
-        self::assertSame('x', $row['a']);
-        self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', (string) $row['ts']);
-        self::assertNull($row['n']);
-        self::assertSame("it's", $row['q']);
-    }
-
-    #[Test]
-    public function it_should_add_columns_with_untrimmed_names(): void
-    {
-        $table = $this->SQLite->table->getDynamicInsertTable();
-        $table->push(['a' => 1]);
-        $table->push([' b ' => 2]);
-        $table->push(['B' => 3])->commit();
-
-        self::assertSame([
-            ['a' => '1', 'b' => ''],
-            ['a' => '', 'b' => '2'],
-            ['a' => '', 'b' => '3'],
-        ], $table->toArray());
-    }
-
-    #[Test]
-    public function it_should_insert_rows_with_many_different_column_sets(): void
-    {
-        $table = $this->SQLite->sparse->getDynamicInsertTable();
-
-        // 255 different column combinations exceed the number of statements kept prepared
-        for ($mask = 1; $mask < 256; ++$mask) {
-            $row = [];
-            for ($bit = 0; $bit < 8; ++$bit) {
-                if ($mask & (1 << $bit)) {
-                    $row['c' . $bit] = $bit;
-                }
-            }
-
-            $table->push($row);
-        }
-
-        $table->commit();
-
-        self::assertCount(255, $table);
-        self::assertSame(128, $table->fetchValue('select count(*) from sparse where c7 = 7'));
     }
 }

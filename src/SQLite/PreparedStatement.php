@@ -118,12 +118,6 @@ final class PreparedStatement
         return $this->sql;
     }
 
-    // Number of parameters the prepared statement expects
-    public function paramCount(): int
-    {
-        return $this->getStatement()->paramCount();
-    }
-
     /** @see https://www.php.net/manual/de/sqlite3stmt.getsql.php  */
     public function getSQL(bool $withBoundValues = false): string
     {
@@ -132,6 +126,12 @@ final class PreparedStatement
         } catch (Exception) {
             return '';
         }
+    }
+
+    // Number of parameters the prepared statement expects
+    public function paramCount(): int
+    {
+        return $this->getStatement()->paramCount();
     }
 
     public function setCommitModulo(int $modulo): self
@@ -166,10 +166,10 @@ final class PreparedStatement
         }
 
         $type ??= match (true) {
-            $value === null  => SQLITE3_NULL,
+            $value === null   => SQLITE3_NULL,
             \is_int($value)   => SQLITE3_INTEGER,
             \is_float($value) => SQLITE3_FLOAT,
-            default          => SQLITE3_TEXT,
+            default           => SQLITE3_TEXT,
         };
 
         // blobs may contain null bytes, text must not

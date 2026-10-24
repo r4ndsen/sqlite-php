@@ -261,6 +261,24 @@ final class QueryTraitTest extends TestCase
     }
 
     #[Test]
+    public function it_should_not_yield_instances_of_abstract_class(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('cannot be instantiated');
+
+        $this->SQLite->fetchInstance('select 1', [], AbstractClass::class);
+    }
+
+    #[Test]
+    public function it_should_not_yield_instances_of_class_with_private_constructor(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('cannot be instantiated');
+
+        $this->SQLite->fetchInstance('select 1', [], WithPrivateConstructor::class);
+    }
+
+    #[Test]
     public function it_should_query_column_does_not_exist_exception(): void
     {
         $this->expectException(ColumnDoesNotExistException::class);
@@ -366,24 +384,6 @@ final class QueryTraitTest extends TestCase
 
         $instances = $this->SQLite->fetchInstances("select rowid, id+10 from `$tablename`", [], WithDebugConstructor::class);
         self::assertCount(2, $instances);
-    }
-
-    #[Test]
-    public function it_should_not_yield_instances_of_abstract_class(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be instantiated');
-
-        $this->SQLite->fetchInstance('select 1', [], AbstractClass::class);
-    }
-
-    #[Test]
-    public function it_should_not_yield_instances_of_class_with_private_constructor(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be instantiated');
-
-        $this->SQLite->fetchInstance('select 1', [], WithPrivateConstructor::class);
     }
 
     #[Test]

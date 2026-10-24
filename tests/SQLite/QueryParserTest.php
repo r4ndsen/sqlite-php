@@ -46,19 +46,6 @@ SQL;
     }
 
     #[Test]
-    public function it_should_not_treat_backslashes_as_escape_characters(): void
-    {
-        // sqlite only escapes quotes by doubling them, a backslash is a regular character
-        $sql = "select 'C:\\' as p, :x as x, 'y' as y";
-        [$statement, $values] = $this->rebuild($sql, ['x' => 42]);
-        self::assertSame("select 'C:\\' as p, :x as x, 'y' as y", $statement);
-        self::assertSame(['x' => 42], $values);
-
-        self::assertSame(['p' => 'C:\\', 'x' => 42, 'y' => 'y'], $this->SQLite->fetchOne($sql, ['x' => 42]));
-        self::assertSame(['p' => 'C:\\', 'x' => 42], $this->SQLite->fetchOne('select "C:\\" as p, :x as x', ['x' => 42]));
-    }
-
-    #[Test]
     public function it_should_ignore_placeholders_and_quotes_in_comments(): void
     {
         $sql = "select :x as x -- don't :y\n, 'z' /* it's :y */ as z, [a:b] as w";
@@ -69,25 +56,6 @@ SQL;
         self::assertSame(['x' => 1, 'z' => 'z', 'a:b' => null], $this->SQLite->fetchOne("select :x as x -- don't :y\n, 'z' as z, null as [a:b]", ['x' => 1]));
         self::assertSame(['x' => 1, 'z' => 'z'], $this->SQLite->fetchOne("select 1 as x -- don't\n, :z as z", ['z' => 'z']));
         self::assertSame(['x' => 1, 'z' => 'z'], $this->SQLite->fetchOne("select 1 as x /* don't */, :z as z", ['z' => 'z']));
-    }
-
-    #[Test]
-    public function it_should_replace_numbered_parameters_with_index(): void
-    {
-        [$statement, $values] = $this->rebuild('select ?2, ?1, ?', ['a', 'b', 'c']);
-        self::assertSame('select :__1, :__2, :__3', $statement);
-        self::assertSame(['__1' => 'b', '__2' => 'a', '__3' => 'c'], $values);
-
-        self::assertSame([7, 7], $this->SQLite->fetchPlain('select ?1, ?1', [7])[0]);
-    }
-
-    #[Test]
-    public function it_should_throw_on_unbound_parameters(): void
-    {
-        $this->expectException(MissingParameterException::class);
-        $this->expectExceptionMessage('The statement expects 1 parameter(s) but 0 were bound');
-
-        $this->SQLite->fetchValue('select @foo', ['foo' => 1]);
     }
 
     #[Test]
@@ -103,6 +71,19 @@ SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($statement, $sql);
         self::assertSame($values, $parameters);
+    }
+
+    #[Test]
+    public function it_should_not_treat_backslashes_as_escape_characters(): void
+    {
+        // sqlite only escapes quotes by doubling them, a backslash is a regular character
+        $sql = "select 'C:\\' as p, :x as x, 'y' as y";
+        [$statement, $values] = $this->rebuild($sql, ['x' => 42]);
+        self::assertSame("select 'C:\\' as p, :x as x, 'y' as y", $statement);
+        self::assertSame(['x' => 42], $values);
+
+        self::assertSame(['p' => 'C:\\', 'x' => 42, 'y' => 'y'], $this->SQLite->fetchOne($sql, ['x' => 42]));
+        self::assertSame(['p' => 'C:\\', 'x' => 42], $this->SQLite->fetchOne('select "C:\\" as p, :x as x', ['x' => 42]));
     }
 
     #[Test]
@@ -179,6 +160,16 @@ SQL;
     }
 
     #[Test]
+    public function it_should_replace_numbered_parameters_with_index(): void
+    {
+        [$statement, $values] = $this->rebuild('select ?2, ?1, ?', ['a', 'b', 'c']);
+        self::assertSame('select :__1, :__2, :__3', $statement);
+        self::assertSame(['__1' => 'b', '__2' => 'a', '__3' => 'c'], $values);
+
+        self::assertSame([7, 7], $this->SQLite->fetchPlain('select ?1, ?1', [7])[0]);
+    }
+
+    #[Test]
     public function it_should_string_constants(): void
     {
         $parameters = ['foo' => ['bar', 'baz']];
@@ -201,6 +192,15 @@ select 'multi line string'
 SQL;
         [$statement, $values] = $this->rebuild($sql, $parameters);
         self::assertSame($sql, $statement);
+    }
+
+    #[Test]
+    public function it_should_throw_on_unbound_parameters(): void
+    {
+        $this->expectException(MissingParameterException::class);
+        $this->expectExceptionMessage('The statement expects 1 parameter(s) but 0 were bound');
+
+        $this->SQLite->fetchValue('select @foo', ['foo' => 1]);
     }
 
     #[Test]

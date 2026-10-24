@@ -73,6 +73,24 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
+    public function it_should_bind_values_with_their_native_type(): void
+    {
+        self::assertSame(
+            ['i' => 'integer', 'f' => 'real', 't' => 'integer', 'b' => 'integer', 'n' => 'null', 's' => 'text'],
+            $this->SQLite->fetchOne(
+                'select typeof(:i) as i, typeof(:f) as f, typeof(:t) as t, typeof(:b) as b, typeof(:n) as n, typeof(:s) as s',
+                ['i' => 5, 'f' => 1.5, 't' => true, 'b' => false, 'n' => null, 's' => '5'],
+            )
+        );
+
+        $this->SQLite->exec('create table flags (done integer, raw)');
+        $this->SQLite->exec('insert into flags values (0, 1)');
+
+        self::assertSame(1, $this->SQLite->fetchValue('select count(*) from flags where done = :done', ['done' => false]));
+        self::assertSame('integer', $this->SQLite->fetchValue('select typeof(raw) from flags'));
+    }
+
+    #[Test]
     public function it_should_competing_statements(): void
     {
         $id = Column::createIntegerColumn('id');
@@ -159,33 +177,6 @@ final class PreparedStatementTest extends TestCase
     }
 
     #[Test]
-    public function it_should_bind_values_with_their_native_type(): void
-    {
-        self::assertSame(
-            ['i' => 'integer', 'f' => 'real', 't' => 'integer', 'b' => 'integer', 'n' => 'null', 's' => 'text'],
-            $this->SQLite->fetchOne(
-                'select typeof(:i) as i, typeof(:f) as f, typeof(:t) as t, typeof(:b) as b, typeof(:n) as n, typeof(:s) as s',
-                ['i' => 5, 'f' => 1.5, 't' => true, 'b' => false, 'n' => null, 's' => '5'],
-            )
-        );
-
-        $this->SQLite->exec('create table flags (done integer, raw)');
-        $this->SQLite->exec('insert into flags values (0, 1)');
-
-        self::assertSame(1, $this->SQLite->fetchValue('select count(*) from flags where done = :done', ['done' => false]));
-        self::assertSame('integer', $this->SQLite->fetchValue('select typeof(raw) from flags'));
-    }
-
-    #[Test]
-    public function it_should_keep_null_bytes_in_blobs_only(): void
-    {
-        $statement = $this->SQLite->prepare('select :blob as blob, :text as text');
-        $row = $statement->bindAssoc(['blob' => "a\0b", 'text' => "a\0b"], ['blob' => SQLITE3_BLOB])->fetchArray(SQLITE3_ASSOC);
-
-        self::assertSame(['blob' => "a\0b", 'text' => 'ab'], $row);
-    }
-
-    #[Test]
     public function it_should_insert_params(): void
     {
         $id = Column::createIntegerColumn('id');
@@ -268,6 +259,15 @@ final class PreparedStatementTest extends TestCase
 
         $this->expectException(QueryException::class);
         $insert->bind([1]);
+    }
+
+    #[Test]
+    public function it_should_keep_null_bytes_in_blobs_only(): void
+    {
+        $statement = $this->SQLite->prepare('select :blob as blob, :text as text');
+        $row = $statement->bindAssoc(['blob' => "a\0b", 'text' => "a\0b"], ['blob' => SQLITE3_BLOB])->fetchArray(SQLITE3_ASSOC);
+
+        self::assertSame(['blob' => "a\0b", 'text' => 'ab'], $row);
     }
 
     #[Test]

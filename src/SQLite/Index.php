@@ -15,6 +15,7 @@ class Index
 
     /** @var Column[] */
     private array $indexedColumns = [];
+
     private string $name;
     private string $unique = '';
     private string $where = '';
@@ -87,5 +88,4 @@ class Index
 
         return $this;
     }
-
 }

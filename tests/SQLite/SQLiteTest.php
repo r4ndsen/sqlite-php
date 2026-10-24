@@ -15,17 +15,6 @@ final class SQLiteTest extends TestCase
     private const FIXTURES_DIR = __DIR__ . '/../fixtures';
 
     #[Test]
-    public function it_should_commit_transaction_upon_reset(): void
-    {
-        $table = $this->SQLite->table->getDynamicInsertTable();
-        $table->push(['id' => 1]);
-
-        self::assertTrue($this->SQLite->getConnection()->getTransaction()->active());
-        $this->SQLite->refresh();
-        self::assertFalse($this->SQLite->getConnection()->getTransaction()->active());
-    }
-
-    #[Test]
     public function it_should_check_tables_with_isset(): void
     {
         $this->SQLite->exec('create table t (a)');
@@ -37,24 +26,14 @@ final class SQLiteTest extends TestCase
     }
 
     #[Test]
-    public function it_should_keep_extensions_and_tables_after_refresh(): void
+    public function it_should_commit_transaction_upon_reset(): void
     {
-        $path = tempnam(sys_get_temp_dir(), 'sqlite');
-        self::assertIsString($path);
+        $table = $this->SQLite->table->getDynamicInsertTable();
+        $table->push(['id' => 1]);
 
-        try {
-            $sqlite = new SQLite($path);
-            $sqlite->table->getDynamicInsertTable()->push(['id' => 1])->commit();
-
-            $sqlite->refresh();
-
-            self::assertSame(md5('a'), $sqlite->fetchValue("select md5('a')"));
-            self::assertCount(1, $sqlite->table);
-            $sqlite->table->getDynamicInsertTable()->push(['id' => 2])->commit();
-            self::assertCount(2, $sqlite->table);
-        } finally {
-            unlink($path);
-        }
+        self::assertTrue($this->SQLite->getConnection()->getTransaction()->active());
+        $this->SQLite->refresh();
+        self::assertFalse($this->SQLite->getConnection()->getTransaction()->active());
     }
 
     #[Test]
@@ -96,6 +75,29 @@ final class SQLiteTest extends TestCase
 
         self::assertSame('foo', $tables[0]->getName());
         self::assertSame('bar', $tables[1]->getName());
+    }
+
+    #[Test]
+    public function it_should_keep_extensions_and_tables_after_refresh(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sqlite');
+        self::assertIsString($path);
+
+        try {
+            $sqlite = new SQLite($path);
+            $sqlite->table->getDynamicInsertTable()->push(['id' => 1])->commit();
+
+            $sqlite->refresh();
+
+            self::assertSame(md5('a'), $sqlite->fetchValue("select md5('a')"));
+            self::assertCount(1, $sqlite->table);
+            $sqlite->table->getDynamicInsertTable()->push(['id' => 2])->commit();
+            self::assertCount(2, $sqlite->table);
+        } finally {
+            // close the connection before deleting the file
+            unset($sqlite);
+            unlink($path);
+        }
     }
 
     #[Test]

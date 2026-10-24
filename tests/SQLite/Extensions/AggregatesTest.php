@@ -29,20 +29,6 @@ final class AggregatesTest extends TestCase
     }
 
     #[Test]
-    public function it_should_group_concat_like_the_native_function(): void
-    {
-        $this->SQLite->exec('create table empty (a)');
-        self::assertNull($this->SQLite->fetchValue('select groupConcat(a) from empty'));
-        self::assertNull($this->SQLite->fetchValue('select groupConcatUnique(a) from empty'));
-
-        $this->SQLite->exec('create table numbers (a)');
-        $this->SQLite->exec('insert into numbers values (1.5), (null), (1.7), (1.5), (2)');
-        self::assertSame('1.5,1.7,1.5,2', $this->SQLite->fetchValue('select groupConcat(a) from numbers'));
-        self::assertSame('1.5,1.7,2', $this->SQLite->fetchValue('select groupConcatUnique(a) from numbers'));
-        self::assertNull($this->SQLite->fetchValue('select groupConcat(a) from numbers where a is null'));
-    }
-
-    #[Test]
     public function it_should_first_and_last_color_row(): void
     {
         self::assertSame(2, $this->SQLite->fetchValue("select first(rowid) from `test` where color = 'green' group by color"));
@@ -85,6 +71,20 @@ final class AggregatesTest extends TestCase
             ],
             $this->SQLite->fetchPairs('select `size`, groupConcat(`color`, " | ") as `color` from `test` group by `size`')
         );
+    }
+
+    #[Test]
+    public function it_should_group_concat_like_the_native_function(): void
+    {
+        $this->SQLite->exec('create table empty (a)');
+        self::assertNull($this->SQLite->fetchValue('select groupConcat(a) from empty'));
+        self::assertNull($this->SQLite->fetchValue('select groupConcatUnique(a) from empty'));
+
+        $this->SQLite->exec('create table numbers (a)');
+        $this->SQLite->exec('insert into numbers values (1.5), (null), (1.7), (1.5), (2)');
+        self::assertSame('1.5,1.7,1.5,2', $this->SQLite->fetchValue('select groupConcat(a) from numbers'));
+        self::assertSame('1.5,1.7,2', $this->SQLite->fetchValue('select groupConcatUnique(a) from numbers'));
+        self::assertNull($this->SQLite->fetchValue('select groupConcat(a) from numbers where a is null'));
     }
 
     #[Test]

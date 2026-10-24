@@ -4,11 +4,11 @@ declare(strict_types=0);
 
 namespace r4ndsen\SQLite;
 
-use r4ndsen\SQLite\Exception\QueryException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use r4ndsen\SQLite;
 use r4ndsen\SQLite\ColumnFactory\ColumnFactory;
+use r4ndsen\SQLite\Exception\QueryException;
 use Stringable;
 
 final class ColumnTest extends TestCase

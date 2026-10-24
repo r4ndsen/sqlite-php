@@ -11,6 +11,30 @@ use r4ndsen\SQLite\Exception\UniqueConstraintException;
 final class IndexTest extends TestCase
 {
     #[Test]
+    public function it_should_allow_percent_signs_in_conditions(): void
+    {
+        $this->SQLite->exec('create table a (name)');
+
+        $index = (new Index(Column::createTextColumn('name')))->setWhere("name like 'a%'");
+
+        self::assertTrue($this->SQLite->a->addIndex($index));
+    }
+
+    #[Test]
+    public function it_should_create_indexes_on_the_same_column_of_different_tables(): void
+    {
+        $this->SQLite->exec('create table a (id)');
+        $this->SQLite->exec('create table b (id)');
+
+        self::assertTrue($this->SQLite->a->addIndex(new Index(Column::createIntegerColumn('id'))));
+        self::assertTrue($this->SQLite->b->addIndex(new Index(Column::createIntegerColumn('id'))));
+
+        self::assertSame(
+            ['a_id' => 'a', 'b_id' => 'b'],
+            $this->SQLite->fetchPairs("select name, tbl_name from sqlite_master where type = 'index' order by name")
+        );
+    }
+    #[Test]
     public function it_should_create_unique_constraint(): void
     {
         $idx = new Index(Column::createDefaultColumn('id'));
@@ -64,30 +88,5 @@ final class IndexTest extends TestCase
         $index->setWhere('1=1');
 
         self::assertSame('create unique index if not exists `name 1 2` on `t` (`id`, `id2`) where 1=1', $index->getCreateStatement('t'));
-    }
-
-    #[Test]
-    public function it_should_create_indexes_on_the_same_column_of_different_tables(): void
-    {
-        $this->SQLite->exec('create table a (id)');
-        $this->SQLite->exec('create table b (id)');
-
-        self::assertTrue($this->SQLite->a->addIndex(new Index(Column::createIntegerColumn('id'))));
-        self::assertTrue($this->SQLite->b->addIndex(new Index(Column::createIntegerColumn('id'))));
-
-        self::assertSame(
-            ['a_id' => 'a', 'b_id' => 'b'],
-            $this->SQLite->fetchPairs("select name, tbl_name from sqlite_master where type = 'index' order by name")
-        );
-    }
-
-    #[Test]
-    public function it_should_allow_percent_signs_in_conditions(): void
-    {
-        $this->SQLite->exec('create table a (name)');
-
-        $index = (new Index(Column::createTextColumn('name')))->setWhere("name like 'a%'");
-
-        self::assertTrue($this->SQLite->a->addIndex($index));
     }
 }

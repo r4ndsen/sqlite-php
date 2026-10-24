@@ -71,12 +71,13 @@ class Table implements Countable, IteratorAggregate, Stringable
      */
     protected array $pushColumns = [];
 
-    /** @var list<int|string> */
-    private array $lastInsertColumns = [];
-    private string $lastInsertKey = '';
-
     // Indicate whether to use transactions for prepared statements
     protected bool $withTransaction = false;
+
+    /** @var list<int|string> */
+    private array $lastInsertColumns = [];
+
+    private string $lastInsertKey = '';
 
     public function __construct(
         private Connection $conn,
@@ -470,6 +471,12 @@ class Table implements Countable, IteratorAggregate, Stringable
         return $this->columnFactory ??= new ColumnFactory();
     }
 
+    /** @throws SQLiteException */
+    protected function hasRows(): bool
+    {
+        return (bool) $this->fetchValue('select exists(select 1 from ' . $this . ')');
+    }
+
     /**
      * Inserts the values into the given columns, columns left out get their default value.
      *
@@ -522,11 +529,5 @@ class Table implements Countable, IteratorAggregate, Stringable
         }
 
         return $preparedStatement;
-    }
-
-    /** @throws SQLiteException */
-    protected function hasRows(): bool
-    {
-        return (bool) $this->fetchValue('select exists(select 1 from ' . $this . ')');
     }
 }
