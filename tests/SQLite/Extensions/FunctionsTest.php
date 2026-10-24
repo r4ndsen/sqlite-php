@@ -70,10 +70,10 @@ final class FunctionsTest extends TestCase
     #[Test]
     public function it_should_functions_empty(): void
     {
-        self::assertTrue((bool) $this->SQLite->querySingle('select empty("")'));
-        self::assertTrue((bool) $this->SQLite->querySingle('select empty(null)'));
-        self::assertFalse((bool) $this->SQLite->querySingle('select empty(0)'));
-        self::assertFalse((bool) $this->SQLite->querySingle('select empty("0")'));
+        self::assertSame(1, $this->SQLite->querySingle('select empty("")'));
+        self::assertSame(1, $this->SQLite->querySingle('select empty(null)'));
+        self::assertSame(0, $this->SQLite->querySingle('select empty(0)'));
+        self::assertSame(0, $this->SQLite->querySingle('select empty("0")'));
     }
 
     #[Test]

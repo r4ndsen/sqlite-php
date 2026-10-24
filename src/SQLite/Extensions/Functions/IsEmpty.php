@@ -10,6 +10,7 @@ class IsEmpty extends AbstractFunction
 
     public function getCallback(): callable
     {
-        return static fn ($s) => $s === '' || $s === null;
+        // SQLite has no boolean type, a PHP bool would be returned as the text '1' or ''
+        return static fn ($s) => (int) ($s === '' || $s === null);
     }
 }
